@@ -1,0 +1,51 @@
+.topContainer{
+    display: flex;
+    width: 100%;
+    height: 600px;
+    justify-content: space-between;
+}
+
+.bottomContainer{
+    display: flex;
+    width: 90%;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+#marketListChecks{
+    padding: 20px;
+    min-width: 300px;
+    border-radius: 10px;
+    margin-left: 20px;
+    margin-top: 20px;
+    border: 1px solid gray;
+    box-shadow: 2px black;
+    height: 85%;
+    overflow-y: scroll;
+}
+
+
+.chart{
+    width: 100%;
+    min-height: 400px;
+}
+
+.statsPage{
+    padding-top: 30px;
+    padding-left: 10px;
+}
+
+.statsPageContent{
+    padding-top: 30px;
+    padding-left: 30px;
+
+}
+
+.statsPageDataList{
+    margin-top: 40px;
+    height: fit-content;
+    width: 340px;
+    border: 1px solid darkgray;
+    border-radius: 10px;
+    padding: 10px
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" id="html">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <script type="text/javascript" src="/eel.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="css/start.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="bootstrap-4.0.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+</head>
+
+<body>
+    <div class="topContainer">
+        <div>
+            <div id="marketListChecks"></div>
+            <button class="btn btn-outline-dark mt-3 ml-4" onclick="marketListSetAll(true)">All</button>
+            <button class="btn btn-outline-dark mt-3 ml-2" onclick="marketListSetAll(false)">None</button>
+            
+        </div>
+        <div id="marketChart" class="chart"></div>
+    </div>
+    <div class="bottomContainer">
+        <div style="min-width: 300px;">
+            <button class="btn btn-outline-dark mt-3 ml-4" disabled onclick="marketExportExcel(getSelectedMarkets());">Export All Excel</button>
+        </div>
+        <div>
+            <label>data type:</label>
+            <div class="form-check ml-4">
+                <input value="open" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType" checked>
+                <label class="form-check-label">
+                    open
+                </label>
+            </div>
+            <div class="form-check ml-4">
+                <input value="close" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType">
+                <label class="form-check-label" >
+                    close
+                </label>
+            </div>
+            <div class="form-check ml-4">
+                <input value="adjclose" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType">
+                <label class="form-check-label" >
+                    adjclose
+                </label>
+            </div>
+        </div>
+        <div>
+            <label>interval:</label>
+            <div class="form-check ml-4">
+                <input value="d" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval" checked>
+                <label class="form-check-label">
+                    daily
+                </label>
+            </div>
+            <div class="form-check ml-4">
+                <input value="wk" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval">
+                <label class="form-check-label" >
+                    weekly
+                </label>
+            </div>
+            <div class="form-check ml-4">
+                <input value="mo" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval">
+                <label class="form-check-label" >
+                    monthly
+                </label>
+            </div>
+        </div>
+        
+        <div class="ml-4">
+            <label>From:</label>
+            <input type="date" id="marketListCheck_from" onchange="updateStatistics();" value="2019-01-01" min="1900-01-01"/>    
+        </div>
+        <div class="ml-4">
+            <label>To:</label>
+            <input type="date" id="marketListCheck_to" onchange="updateStatistics();" value="2025-01-01" min="1900-01-01" />    
+        </div>
+        <div>
+            <label>Sections:</label>
+            <div class="input-group mb-1">
+                <input style="height: 30px;" value="4" type="number" class="form-control" id="marketListCheck_sections" onchange="updateStatistics();">
+            </div>
+        </div>
+    </div>
+    <div class="statsPage">
+        <div>
+            <h3 class="fl">Comparison</h3>
+            <div class="fl ml-3">
+                <div>
+                    <select id="comparisonTitle1" class="form-select" style="height: 33px" onchange="updateStatistics();" >
+                    </select>
+                    <label>over</label>
+                    <select id="comparisonTitle2" class="form-select" style="height: 33px" onchange="updateStatistics();">
+                    </select>
+                </div>
+            </div>
+            <div class="cl"></div>
+        </div>
+        <div class="statsPageContent">
+            <div class="flex "> 
+                <div class="statsPageDataList">
+                    <div class="flex">
+                        <div class="bd">Correlation</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonCorrelation">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="bd">Weighted Correlation</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonWeightedCorrelation">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="bd">Beta Daily</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonBetaDaily">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="bd">Beta Weekly</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonBetaWeekly">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="bd">Beta Monthly</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonBetaMonthly">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="comparisonRatio" onchange="updateStatistics();">
+                            <label class="form-check-label bd" for="flexCheckDefault">Show Ratio Chart</label>
+                          </div>
+                    </div>
+                </div>
+                <div id="comparisonChart" class="chart"></div>
+            </div>
+        </div>
+        
+
+    </div>
+
+
+    
+    <div id="statsPageContainer"> 
+    </div>
+
+    <script src="script/start.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+.flex{
+    display: flex;
+    justify-content: space-between;
+}
+
+.fl{
+    float: left;
+}
+
+.cl{
+    clear: both;
+}
+
+.bd{
+    font-weight: bold;
+}
+
+hr{
+    margin: 0.5rem 0 !important;
+    color: rgb(96, 96, 96);
+}
