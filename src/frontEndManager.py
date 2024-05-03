@@ -41,15 +41,15 @@ def loadTitles():
     eel.setTitles(marketMatrix.cache)
 
 @eel.expose
-def formatData(markets, fromDate, toDate, interval, type, elemId, dataChartCode):
+def formatData(markets, fromDate, toDate, interval, type, valueType, elemId, dataChartCode):
     if(len(markets)==0):
         return []
     data = marketMatrix.getMarketsData(markets, fromDate, toDate, interval, type)
     formattedData = []
     for t in range(len(data[markets[0]])):
-        formattedData.append([t])
+        formattedData.append([data[markets[0]][t]["timestamp"]])
         for m in markets:
-            formattedData[t].append(data[m][t]["value"])
+            formattedData[t].append(data[m][t][valueType])
     eel.applyChart(formattedData, elemId, dataChartCode) 
 
 
@@ -70,7 +70,7 @@ def calculateStats(markets, fromDate, toDate, interval, type, weightedCorrelatio
 
 
 @eel.expose
-def exportExcet(market, fromDate, toDate, interval, type):
+def exportExcel(market, fromDate, toDate, interval, type):
 
     data = marketMatrix.getMarketsData([market], fromDate, toDate, interval, type)
     dataExp={

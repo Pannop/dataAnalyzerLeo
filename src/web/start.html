@@ -80,7 +80,7 @@
             <input type="date" id="marketListCheck_to" onchange="updateStatistics();" value="2025-01-01" min="1900-01-01" />    
         </div>
         <div>
-            <label>Sections:</label>
+            <label>Correlation Sections:</label>
             <div class="input-group mb-1">
                 <input style="height: 30px;" value="4" type="number" class="form-control" id="marketListCheck_sections" onchange="updateStatistics();">
             </div>
@@ -129,14 +129,16 @@
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="" id="comparisonRatio" onchange="updateStatistics();">
-                            <label class="form-check-label bd" for="flexCheckDefault">Show Ratio Chart</label>
-                          </div>
+                        <button class="btn btn-outline-dark" onclick="runSubdivision([comparisonTitle1.value, comparisonTitle2.value]);">Run Subdivision</button>
                     </div>
                 </div>
-                <div id="comparisonChart" class="chart"></div>
+                <div class="chartContainer">
+                    <div id="comparisonChartScaled" class="chart"></div>
+                </div>
             </div>
+            <div id="comparisonChartDelta" class="chart"></div>
+            <div id="comparisonChartDeltaValues" class="chart"></div>
+            <div id="comparisonChartRatio" class="chart"></div>
         </div>
         
 
@@ -146,8 +148,18 @@
     
     <div id="statsPageContainer"> 
     </div>
+    <div class="statsPage">
+        <h3 class="fl">Valid Markets</h3>
+
+    </div>
+
+    <div id="simulationPanel">
+        <button class="btn btn-outline-dark mt-3 ml-2" onclick="closeSimulationPanel();">Close</button>
+        <div id="simulationContent"></div>
+    </div>
 
     <script src="script/start.js"></script>
+    <script src="script/subdivision.js"></script>
+    <script src="script/montecarlo.js"></script>
 </body>
-
 </html>

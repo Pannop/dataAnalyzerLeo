@@ -11,6 +11,10 @@
     clear: both;
 }
 
+.w-200{
+    width: 200px;
+}
+
 .bd{
     font-weight: bold;
 }

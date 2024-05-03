@@ -1,3 +1,5 @@
+var simulationPanel = document.getElementById("simulationPanel");
+var simulationContent = document.getElementById("simulationContent");
 var marketListChecks = document.getElementById("marketListChecks");
 var marketListCheck_from = document.getElementById("marketListCheck_from");
 var marketListCheck_to = document.getElementById("marketListCheck_to");
@@ -8,6 +10,8 @@ var comparisonTitle2 = document.getElementById("comparisonTitle2");
 var comparisonRatio = document.getElementById("comparisonRatio");
 
 var TAG_RATIO = "ratio";
+var TAG_SUM_PREC = "sumprec";
+var TAG_SCALED = "scaled";
 
 var baseData = null;
 
@@ -104,6 +108,12 @@ function updateStatistics(){
     setStats();
 }
 
+function removeCharts(){
+    document.querySelectorAll(".chart").forEach((c)=>{
+        c.innerHTML="";
+    })
+}
+
 function setStats(){
     eel.calculateStats([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), parseInt(marketListCheck_sections.value), "comparison"); 
     getSelectedMarkets().forEach((title)=>{
@@ -160,11 +170,16 @@ function createStatsPages(){
                         </div>
                         <hr>
                         <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runSubdivision(['${title}']);">Run Subdivision</button>
+                        </div>
+                        <hr>
+                        <div class="flex">
                             <button class="btn btn-outline-dark">Run Montecarlo</button>
                         </div>
                     </div>
-                    <div id="market${title}Chart" class="chart"></div>
+                    <div id="market${title}ChartValues" class="chart"></div>
                 </div>
+                <div id="market${title}ChartDeltaValues" class="chart"></div>
             </div>
         </div>
         `
@@ -173,22 +188,26 @@ function createStatsPages(){
 }
 
 function marketExportExcel(titles){
-    eel.exportExcet(titles, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue());
+    eel.exportExcel(titles, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue());
 }
 
 
 var chartCodeCounter = 0;
 var chartDataTables = {}
-function addChartDataTable(columns, tags=null){
+function addChartDataTable(columns, title, tags=null, yAxis="price", xAxis="time", callbackPreTag=null, callbackAfterTag=null){
     chartDataTables[chartCodeCounter.toString()] = {};
     obj = chartDataTables[chartCodeCounter.toString()]; 
     obj["table"] =  new google.visualization.DataTable();
-    obj["table"].addColumn('number', 'x');
+    obj["table"].addColumn('date', 'x');
     columns.forEach(element => {
         obj["table"].addColumn('number', element);
     });
+    obj["title"] = title;
     obj["tags"] = (tags==null?[]:tags);
-    console.log(chartDataTables);
+    obj["yAxis"] = yAxis;
+    obj["xAxis"] = xAxis;
+    obj["callbackPreTag"] = callbackPreTag;
+    obj["callbackAfterTag"] = callbackAfterTag;
     return (chartCodeCounter++).toString();
 }
 
@@ -202,11 +221,17 @@ function drawCharts(){
         drawingCharts = true;
         
 
-        eel.formatData(selected, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "marketChart", addChartDataTable(selected));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "comparisonChart", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], (comparisonRatio.checked?[TAG_RATIO]:null)));
+        eel.formatData(selected, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "marketChart", addChartDataTable(selected,""));
+        
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDelta", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "percentage trend", [TAG_SUM_PREC], "percentage"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "scalar factor trand", [TAG_SCALED]));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaValues", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta values", [], "percentage"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "ratio", [TAG_RATIO], "value"));
+
         
         selected.forEach(title => {
-            eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), `market${title}Chart`, addChartDataTable([title]));
+            eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartValues`, addChartDataTable([title], "prices"));
+            eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDeltaValues`, addChartDataTable([title], "delta values", [], "percentage"));
         });
 
         eel.sendStopDrawing()
@@ -222,28 +247,62 @@ function stopDrawing(){
 eel.expose(applyChart);
 function applyChart(formattedData, elemId, dataChartCode){
     setTimeout(()=>{
-        dataTable = chartDataTables[dataChartCode]["table"];
-        tags = chartDataTables[dataChartCode]["tags"];
+        let dataTable = chartDataTables[dataChartCode]["table"];
+        let chartTitle = chartDataTables[dataChartCode]["title"];
+        let tags = chartDataTables[dataChartCode]["tags"];
+        let yAxis = chartDataTables[dataChartCode]["yAxis"];
+        let xAxis = chartDataTables[dataChartCode]["xAxis"];
+        let callbackPreTag = chartDataTables[dataChartCode]["callbackPreTag"];
+        let callbackAfterTag = chartDataTables[dataChartCode]["callbackAfterTag"];
         
-        if(tags.includes(TAG_RATIO)){
-            dataTable.removeColumns(1,2);
-            dataTable.addColumn('number', "ratio");
-            for(let i=0;i<formattedData.length;i++){
-                formattedData[i][1] = (formattedData[i][1]/formattedData[i][2]);
-                formattedData[i].pop(2);
-    
-            }
+        for(let i=0;i<formattedData.length;i++){
+            formattedData[i][0] = new Date(formattedData[i][0]*1000);
         }
+
+        if(callbackPreTag){
+            formattedData = callbackPreTag(formattedData, dataChartCode);
+        }
+        tags.forEach((t)=>{
+            if(t == TAG_RATIO){
+                dataTable.removeColumns(1,2);
+                dataTable.addColumn('number', "ratio");
+                for(let i=0;i<formattedData.length;i++){
+                    formattedData[i][1] = (formattedData[i][1]/formattedData[i][2]);
+                    formattedData[i].pop(2);
+        
+                }
+            }
+            else if( t == TAG_SUM_PREC){
+                for(let i=1;i<formattedData.length;i++){
+                    for(let j=1;j<formattedData[0].length; j++){
+                        formattedData[i][j] += formattedData[i-1][j];
+                    }
+                }
+            }
+            else if(t == TAG_SCALED){
+                for(let j=2;j<formattedData[0].length; j++){
+                    let factorScale = formattedData[0][1]/formattedData[0][j];
+                    for(let i=0;i<formattedData.length;i++){
+                        formattedData[i][j] *= factorScale;
+                    }
+                }
+            }
+        });
+        if(callbackAfterTag){
+            formattedData = callbackAfterTag(formattedData, dataChartCode);
+        }
+
     
         dataTable.addRows(formattedData);
     
         let options = {
             hAxis: {
-                title: 'Time'
+                title: xAxis
             },
             vAxis: {
-                title: 'Value'
-            }
+                title: yAxis
+            },
+            title: chartTitle
         };
     
         let chart = new google.visualization.LineChart(document.getElementById(elemId));
@@ -264,5 +323,21 @@ function loadStats(){
 }
 
 
+function openSimulationPanel(){
+    window.scrollTo(0, 0);
+    simulationPanel.style.display="block";
+    document.getElementById("html").style.overflowY="hidden";
+    removeCharts();
+}
 
+function closeSimulationPanel(){
+    simulationPanel.style.display="none";
+    document.getElementById("html").style.overflowY="scroll";
+    updateStatistics();
+}
+
+
+function dateToString(date){
+    return date.getDate()+"/"+(date.getMonth()+1)+"/"+(date.getYear()+1900);
+}
 
