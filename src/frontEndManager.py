@@ -3,6 +3,7 @@ import json
 import pandas
 import os
 from marketAnalyzer import MarketMatrix
+from montecarlo import calculateMontecarlo, calculateMontecarloV2
 
 eel.init("./src/web/")
 
@@ -70,6 +71,12 @@ def calculateStats(markets, fromDate, toDate, interval, type, weightedCorrelatio
 
 
 @eel.expose
+def calculateCorrelationMatrix(markets, fromDate, toDate, interval, type):
+    corrMatrix = marketMatrix.createCorrelationMatrix(markets, fromDate, toDate, interval, type)
+    eel.createCorrelationTable(corrMatrix.to_dict())
+    
+
+@eel.expose
 def exportExcel(market, fromDate, toDate, interval, type):
 
     data = marketMatrix.getMarketsData([market], fromDate, toDate, interval, type)
@@ -83,4 +90,11 @@ def exportExcel(market, fromDate, toDate, interval, type):
 @eel.expose
 def sendStopDrawing():
     eel.stopDrawing()
+
+
+@eel.expose
+def mont(market, fromDate, toDate, interval, type, simulations, dataNum):
+    data = marketMatrix.getMarketsData([market], fromDate, toDate, interval, type)
+    calculateMontecarlo(data[market], simulations, dataNum)
+
 

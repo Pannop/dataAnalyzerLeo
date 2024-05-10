@@ -7,6 +7,7 @@ import numpy as np
 import time
 import math
 import matplotlib as mp
+import pandas as pd
 AV_KEY = "NPRZ3R6XPBJWSA26"
 
 
@@ -28,7 +29,7 @@ def getBIMarketData(symbol):
     return req.json()
 
 
-def getYaMarketData(symbol,interval="1d"):
+def getYaMarketData(symbol,interval="1d", retryCount = 0):
     t = str(time.time()).split(".")[0]
     header = {
     "Host": "query1.finance.yahoo.com",
@@ -49,8 +50,10 @@ def getYaMarketData(symbol,interval="1d"):
     try:    
         req = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?symbol={symbol}&period1=0&period2={t}&useYfid=true&interval={interval}&includePrePost=true&events=div|split|earn&lang=it-IT&region=IT&crumb=bZtbC8282C3&corsDomain=it.finance.yahoo.com", headers=header)
     except:
+        if(retryCount==100):
+            raise ConnectionError()
         print("retrying")
-        return getYaMarketData(symbol, interval)
+        return getYaMarketData(symbol, interval, retryCount+1)
     return req.json()
 
 def calculateBIDelta(data, fromYear=0, dayStep=1):
@@ -66,7 +69,10 @@ def getDeltas(x, y):
         dayStep=1
         for i in range(len(x)):
             if(x[i] and y[i] and x[i-dayStep] and y[i-dayStep]):
-                deltas.append({"time":str(datetime.date.fromtimestamp(x[i])), "timestamp":x[i], "deltaPerc":round((y[i]-y[i-dayStep])/y[i-dayStep], 7),"delta":(y[i]-y[i-dayStep]), "value":y[i]})
+                deltas.append({"time":str(datetime.date.fromtimestamp(x[i])), "timestamp":x[i], "deltaPerc":round((y[i]-y[i-dayStep])/y[i-dayStep], 7),"delta":(y[i]-y[i-dayStep]),"log": np.log(abs(y[i]/y[i-dayStep])), "value":y[i]})
+      
+                #time.sleep(0.1)
+
         return deltas
 
 def calculateYaDelta(data, fromYear=0, dayStep=1):
@@ -76,10 +82,10 @@ def calculateYaDelta(data, fromYear=0, dayStep=1):
     yAdj=data["chart"]["result"][0]["indicators"]["adjclose"][0]["adjclose"]
     yNor=data["chart"]["result"][0]["indicators"]["quote"][0]
     
-    
     return {"open":getDeltas(x, yNor["open"]),
             "close":getDeltas(x, yNor["close"]),
             "adjclose":getDeltas(x, yAdj)}
+    
 
 
 
@@ -178,27 +184,34 @@ class MarketMatrix:
 
     
     def calculateWeightedCorrelation(self, data0, data1, sections):
-        lenData = len(data0)
-        ranges = math.ceil(lenData/sections)
-        sum = 0
-        for i in range(sections):
-            sum += self.calculateCorrelation(data0[max(0, lenData-(i+1)*ranges):], data1[max(0, lenData-(i+1)*ranges):])
-        return round(sum/sections, 4)
+        try:
+            lenData = len(data0)
+            ranges = math.ceil(lenData/sections)
+            sum = 0
+            for i in range(sections):
+                sum += self.calculateCorrelation(data0[max(0, lenData-(i+1)*ranges):], data1[max(0, lenData-(i+1)*ranges):])
+            return round(sum/sections, 4)
+        except TypeError:
+            return "N/D"
 
 
 
     def calculateCorrelation(self, data0, data1):
-        av0 = sum(data0)/len(data0)
-        av1 = sum(data1)/len(data1)
-        return round(summt(data0, av0, data1, av1) / math.sqrt(summt(data0, av0, data0, av0)*summt(data1, av1, data1, av1)), 4)
-        
+        try:
+            av0 = sum(data0)/len(data0)
+            av1 = sum(data1)/len(data1)
+            return round(summt(data0, av0, data1, av1) / math.sqrt(summt(data0, av0, data0, av0)*summt(data1, av1, data1, av1)), 4)
+        except:
+            return "N/D"
 
 
     def calculateBeta(self, data0, data1):
-        av0 = sum(data0)/len(data0)
-        av1 = sum(data1)/len(data1)
-        return round(summt(data0, av0, data1, av1) / summt(data1, av1, data1, av1), 4)
-
+        try:
+            av0 = sum(data0)/len(data0)
+            av1 = sum(data1)/len(data1)
+            return round(summt(data0, av0, data1, av1) / summt(data1, av1, data1, av1), 4)
+        except:
+            return "N/D"
 
     
     def calculateIndexBetas(self):
@@ -215,36 +228,32 @@ class MarketMatrix:
 
 
 
-    def createCorrispondences(self):
-        marketNum = len(self.marketList)
-        for m0 in range(marketNum):
-            m0Name = self.marketList[m0]
-            count=0
-            for m1 in range(marketNum):
-                m1Name = self.marketList[m1]
-                if(m0!=m1):
-                    if(self.correlationMarketMatrix[m0][m1]>self.CORRISPONDECE_THRESHOLD or self.correlationMarketMatrix[m0][m1]<-self.CORRISPONDECE_THRESHOLD):
-                        self.corrispondences.append({"title1":m0Name, "title2":m1Name, "correlation":self.correlationMarketMatrix[m0][m1], "beta":self.betaMarketMatrix[m0][m1]})
-                        count+=1
-
-            if(count==0 or True):
-                if(self.correlationIndexList[m0]>self.CORRISPONDECE_THRESHOLD or self.correlationIndexList[m0]<-self.CORRISPONDECE_THRESHOLD):
-                    self.corrispondences.append({"title1":m0Name, "title2":self.indexName, "correlation":self.correlationIndexList[m0], "beta":self.betaIndexList[m0]})
-
+    def createCorrelationMatrix(self, markets, fromDate, toDate, interval, type):
+        data = self.getMarketsData(markets, fromDate, toDate, interval, type)
+        dataMat = []
+        for m in markets:
+            dataMat.append([d["value"] for d in data[m]])
+        df = pd.DataFrame(dataMat).T
+        return df.corr()
             
 
     def loadData(self, fromYear=0, dayStep=1, loadOnlyCache=False):
         if((self.cache==None or self.cache["date"]!=str(datetime.date.today()) or self.cache["indexName"]!=self.indexName or self.cache["marketList"]!=self.marketList) and not loadOnlyCache):
             self.cache={"date":str(datetime.date.today())}
-            self.loadMarketData(fromYear,dayStep)
-            self.loadIndexData(fromYear,dayStep)
-            self.cache["index"]=self.indexData
-            self.cache["market"]=self.marketData
-            self.cache["indexName"]=self.indexName
-            self.cache["marketList"]=self.marketList
-        else:
-            self.indexData = self.cache["index"]
-            self.marketData = self.cache["market"]  
+            try:
+                self.loadMarketData(fromYear,dayStep)
+                self.loadIndexData(fromYear,dayStep)
+                self.cache["index"]=self.indexData
+                self.cache["market"]=self.marketData
+                self.cache["indexName"]=self.indexName
+                self.cache["marketList"]=self.marketList
+                return
+            except ConnectionError:
+                print("Connection Error: using cache")
+                
+ 
+        self.indexData = self.cache["index"]
+        self.marketData = self.cache["market"]  
 
         
     def calculateAllData(self):

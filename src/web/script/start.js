@@ -8,6 +8,8 @@ var statsPageContainer = document.getElementById("statsPageContainer");
 var comparisonTitle1 = document.getElementById("comparisonTitle1");
 var comparisonTitle2 = document.getElementById("comparisonTitle2");
 var comparisonRatio = document.getElementById("comparisonRatio");
+var correlationTable = document.getElementById("correlationTable");
+
 
 var TAG_RATIO = "ratio";
 var TAG_SUM_PREC = "sumprec";
@@ -174,7 +176,7 @@ function createStatsPages(){
                         </div>
                         <hr>
                         <div class="flex">
-                            <button class="btn btn-outline-dark">Run Montecarlo</button>
+                            <button class="btn btn-outline-dark" onclick="runMontecarlo('${title}');">Run Montecarlo</button>
                         </div>
                     </div>
                     <div id="market${title}ChartValues" class="chart"></div>
@@ -320,6 +322,40 @@ function loadStats(){
             </div>
         </div>
     `
+}
+
+function runCorrelationTable(){
+    eel.calculateCorrelationMatrix(getSelectedMarkets(), marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue());
+}
+
+eel.expose(createCorrelationTable);
+function createCorrelationTable(corrMatrix){
+    console.log(corrMatrix);
+    let markets = getSelectedMarkets();
+    let upperThreshold = document.getElementById("correlationUpperThreshold").value;
+    let  lowerThreshold = document.getElementById("correlationLowerThreshold").value;
+    tableHtml = `<thead><tr><th scope="col"></th>`;
+    markets.forEach((m)=>{
+        tableHtml+=`<th scope="col">${m}</th>`
+    });
+    tableHtml+="</tr></thead><tbody>";
+    for(let i=0;i<markets.length;i++){
+        tableHtml+=`<tr><th scope="row">${markets[i]}</th>`;
+        for(let j=0;j<markets.length;j++){
+            let bkg = "";
+            if(corrMatrix[i][j]>=upperThreshold){
+                bkg="background-color: green";
+            }
+            if(corrMatrix[i][j]<=lowerThreshold){
+                bkg="background-color: red";
+            }
+            tableHtml+=`<td title="${markets[i]} - ${markets[j]}" style="${bkg}">${corrMatrix[i][j]}</td>`;
+        }
+
+        tableHtml+="</tr>"
+    }
+    tableHtml+="</tbody>";
+    correlationTable.innerHTML = tableHtml;
 }
 
 
