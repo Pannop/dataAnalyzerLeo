@@ -2,6 +2,7 @@ import eel
 import json
 import pandas
 import os
+import numpy as np
 from marketAnalyzer import MarketMatrix
 from montecarlo import calculateMontecarlo, calculateMontecarloV2
 
@@ -39,7 +40,7 @@ def setDefaultSize():
 
 @eel.expose
 def loadTitles():
-    eel.setTitles(marketMatrix.cache)
+    eel.setTitles({"indexName":marketMatrix.cache["indexName"], "marketList":marketMatrix.cache["marketList"]})
 
 @eel.expose
 def formatData(markets, fromDate, toDate, interval, type, valueType, elemId, dataChartCode):
@@ -56,24 +57,53 @@ def formatData(markets, fromDate, toDate, interval, type, valueType, elemId, dat
 
 @eel.expose
 def calculateStats(markets, fromDate, toDate, interval, type, weightedCorrelationSections, elemsId):
-    if(len(markets)==1):
-        markets.append(marketMatrix.indexName)
+    markets.append(marketMatrix.indexName)
     dataDaily = marketMatrix.getMarketsData(markets, fromDate, toDate, "d", type)
     dataWeekly = marketMatrix.getMarketsData(markets, fromDate, toDate, "wk", type)
     dataMonthly = marketMatrix.getMarketsData(markets, fromDate, toDate, "mo", type)
     
     correlation = marketMatrix.calculateCorrelation([d["value"] for d in dataDaily[markets[0]]], [d["value"] for d in dataDaily[markets[1]]])
     weightedCorrelation = marketMatrix.calculateWeightedCorrelation([d["value"] for d in dataDaily[markets[0]]], [d["value"] for d in dataDaily[markets[1]]], weightedCorrelationSections)
-    betaDaily = marketMatrix.calculateBeta([d["deltaPerc"] for d in dataDaily[markets[0]]], [d["deltaPerc"] for d in dataDaily[markets[1]]])
-    betaWeekly = marketMatrix.calculateBeta([d["deltaPerc"] for d in dataWeekly[markets[0]]], [d["deltaPerc"] for d in dataWeekly[markets[1]]])
-    betaMonthly= marketMatrix.calculateBeta([d["deltaPerc"] for d in dataMonthly[markets[0]]], [d["deltaPerc"] for d in dataMonthly[markets[1]]])
-    eel.applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, elemsId)
+    def getBeta(data):
+        try:
+            return round(marketMatrix.calculateBeta([d["deltaPerc"] for d in data[markets[0]]], [d["deltaPerc"] for d in data[marketMatrix.indexName]]) / marketMatrix.calculateBeta([d["deltaPerc"] for d in data[markets[1]]], [d["deltaPerc"] for d in data[marketMatrix.indexName]]), 3)
+        except:
+            return "N/D"
+
+    betaDaily = getBeta(dataDaily)
+    betaWeekly = getBeta(dataWeekly)
+    betaMonthly = getBeta(dataMonthly)
+    #betaWeekly = marketMatrix.calculateBeta([d["deltaPerc"] for d in dataWeekly[markets[0]]], [d["deltaPerc"] for d in dataWeekly[markets[1]]])
+    #betaMonthly= marketMatrix.calculateBeta([d["deltaPerc"] for d in dataMonthly[markets[0]]], [d["deltaPerc"] for d in dataMonthly[markets[1]]])
+    
+    def getDeltaTrend(data):
+        maxThreshold = 10
+        beforeMean = 0.1
+        lst = []
+        try:
+            for i in range(len(data[markets[0]])):
+                if data[markets[1]][i]["deltaPerc"]!=0:
+                    val = data[markets[0]][i]["deltaPerc"]/data[markets[1]][i]["deltaPerc"]
+                    prog = i/len(data[markets[0]])
+                    if(prog<=beforeMean or (prog>beforeMean and abs(val/np.average(lst)) < maxThreshold)):
+                        lst.append(val)
+            
+            return round(sum(lst)/len(lst), 3)
+        except:
+            return "N/D"
+        
+    deltaTrendDaily = getDeltaTrend(dataDaily)
+    deltaTrendWeekly = getDeltaTrend(dataWeekly)
+    deltaTrendMonthly = getDeltaTrend(dataMonthly)
+    #deltaTrendWeekly = np.average([dataWeekly[markets[0]][i]["deltaPerc"]/dataWeekly[markets[1]][i]["deltaPerc"] for i in range(len(dataWeekly[markets[0]])) if dataWeekly[markets[1]][i]["deltaPerc"]!=0])
+    #deltaTrendMonthly = np.average([dataMonthly[markets[0]][i]["deltaPerc"]/dataMonthly[markets[1]][i]["deltaPerc"] for i in range(len(dataMonthly[markets[0]])) if dataMonthly[markets[1]][i]["deltaPerc"]!=0])
+    eel.applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, deltaTrendDaily, deltaTrendWeekly, deltaTrendMonthly, elemsId)
 
 
 @eel.expose
 def calculateCorrelationMatrix(markets, fromDate, toDate, interval, type):
     corrMatrix = marketMatrix.createCorrelationMatrix(markets, fromDate, toDate, interval, type)
-    eel.createCorrelationTable(corrMatrix.to_dict())
+    eel.createCorrelationTable(corrMatrix)
     
 
 @eel.expose
@@ -95,6 +125,6 @@ def sendStopDrawing():
 @eel.expose
 def mont(market, fromDate, toDate, interval, type, simulations, dataNum):
     data = marketMatrix.getMarketsData([market], fromDate, toDate, interval, type)
-    calculateMontecarlo(data[market], simulations, dataNum)
+    calculateMontecarloV2(data[market], simulations, dataNum)
 
 

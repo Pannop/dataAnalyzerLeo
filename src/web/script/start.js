@@ -9,7 +9,8 @@ var comparisonTitle1 = document.getElementById("comparisonTitle1");
 var comparisonTitle2 = document.getElementById("comparisonTitle2");
 var comparisonRatio = document.getElementById("comparisonRatio");
 var correlationTable = document.getElementById("correlationTable");
-
+var correlationValidTitles = document.getElementById("correlationValidTitles");
+var correlationTriangular = document.getElementById("correlationTriangular");
 
 var TAG_RATIO = "ratio";
 var TAG_SUM_PREC = "sumprec";
@@ -124,22 +125,52 @@ function setStats(){
 }
 
 eel.expose(applyStats);
-function applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, elemsId){
+function applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, deltaTrendDaily, deltaTrendWeekly, deltaTrendMonthly, elemsId){
     document.getElementById(elemsId+"Correlation").innerHTML = correlation;
     document.getElementById(elemsId+"WeightedCorrelation").innerHTML = weightedCorrelation;
     document.getElementById(elemsId+"BetaDaily").innerHTML = betaDaily;
     document.getElementById(elemsId+"BetaWeekly").innerHTML = betaWeekly;
     document.getElementById(elemsId+"BetaMonthly").innerHTML = betaMonthly;
+    document.getElementById(elemsId+"DeltaTrendDaily").innerHTML = deltaTrendDaily;
+    document.getElementById(elemsId+"DeltaTrendWeekly").innerHTML = deltaTrendWeekly;
+    document.getElementById(elemsId+"DeltaTrendMonthly").innerHTML = deltaTrendMonthly;
 }
 
+
+function invertStatsPages(markets){
+    markets.forEach((m)=>{
+        let elem = document.getElementById("statsPageContent"+m);
+        if(elem.style.display=="none")
+            openStatsPages([m]);
+        else
+            closeStatsPages([m]);
+    });
+}
+
+function openStatsPages(markets){
+    markets.forEach((m)=>{
+        let elem = document.getElementById("statsPageContent"+m);
+        elem.style.display="block";
+        drawTitleCharts(m);
+    });
+}
+
+function closeStatsPages(markets){
+    markets.forEach((m)=>{
+        let elem = document.getElementById("statsPageContent"+m);
+        elem.style.display="none";
+        ereaseTitleCharts(m);
+    });
+}
 
 function createStatsPages(){
     innerHtml = "";
     getSelectedMarkets().forEach((title)=>{
         innerHtml+=`
         <div class="statsPage">
-            <h3>${title}</h3>
-            <div class="statsPageContent">
+            <button class="btn btn-info dropdown-toggle" style="font-size: 1.20rem;font-weight: 500;" type="button" onclick="invertStatsPages(['${title}'])" id="dropdownMenuButton" aria-haspopup="true" aria-expanded="false">${title}</button>
+            
+            <div class="statsPageContent" id="statsPageContent${title}" style="display:none">
                 <div class="flex "> 
                     <div class="statsPageDataList">
                         <div class="flex">
@@ -153,18 +184,33 @@ function createStatsPages(){
                         </div>
                         <hr>
                         <div class="flex">
-                            <div class="bd">Beta Daily</div>
+                            <div class="bd">Beta/Beta Daily</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}BetaDaily">1.3</div>
                         </div>
                         <hr>
                         <div class="flex">
-                            <div class="bd">Beta Weekly</div>
+                            <div class="bd">Beta/Beta Weekly</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}BetaWeekly">1.3</div>
                         </div>
                         <hr>
                         <div class="flex">
-                            <div class="bd">Beta Monthly</div>
+                            <div class="bd">Beta/Beta Monthly</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}BetaMonthly">1.3</div>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <div class="bd">Delta Trend Daily</div>
+                            <div style="color: rgb(49, 49, 49);" id="market${title}DeltaTrendDaily">1.3</div>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <div class="bd">Delta Trend Weekly</div>
+                            <div style="color: rgb(49, 49, 49);" id="market${title}DeltaTrendWeekly">1.3</div>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <div class="bd">Delta Trend Monthly</div>
+                            <div style="color: rgb(49, 49, 49);" id="market${title}DeltaTrendMonthly">1.3</div>
                         </div>
                         <hr>
                         <div class="flex">
@@ -214,6 +260,15 @@ function addChartDataTable(columns, title, tags=null, yAxis="price", xAxis="time
 }
 
 
+function drawTitleCharts(title){
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartValues`, addChartDataTable([title], "prices"));
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDeltaValues`, addChartDataTable([title], "delta values", [], "percentage"));
+}
+
+function ereaseTitleCharts(title){
+    document.getElementById(`market${title}ChartValues`).innerHTML="";
+    document.getElementById(`market${title}ChartDeltaValues`).innerHTML="";
+}
 
 var drawingCharts = false;
 function drawCharts(){
@@ -226,15 +281,11 @@ function drawCharts(){
         eel.formatData(selected, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "marketChart", addChartDataTable(selected,""));
         
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDelta", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "percentage trend", [TAG_SUM_PREC], "percentage"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "scalar factor trand", [TAG_SCALED]));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "scalar factor Trend", [TAG_SCALED]));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaValues", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta values", [], "percentage"));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "ratio", [TAG_RATIO], "value"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta ratio", [TAG_RATIO], "value"));
 
-        
-        selected.forEach(title => {
-            eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartValues`, addChartDataTable([title], "prices"));
-            eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDeltaValues`, addChartDataTable([title], "delta values", [], "percentage"));
-        });
 
         eel.sendStopDrawing()
     }
@@ -249,6 +300,8 @@ function stopDrawing(){
 eel.expose(applyChart);
 function applyChart(formattedData, elemId, dataChartCode){
     setTimeout(()=>{
+        if(chartDataTables[dataChartCode]==null)
+            return;
         let dataTable = chartDataTables[dataChartCode]["table"];
         let chartTitle = chartDataTables[dataChartCode]["title"];
         let tags = chartDataTables[dataChartCode]["tags"];
@@ -328,34 +381,50 @@ function runCorrelationTable(){
     eel.calculateCorrelationMatrix(getSelectedMarkets(), marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue());
 }
 
+
+var corrMatrixCache = null;
 eel.expose(createCorrelationTable);
 function createCorrelationTable(corrMatrix){
-    console.log(corrMatrix);
-    let markets = getSelectedMarkets();
-    let upperThreshold = document.getElementById("correlationUpperThreshold").value;
-    let  lowerThreshold = document.getElementById("correlationLowerThreshold").value;
-    tableHtml = `<thead><tr><th scope="col"></th>`;
-    markets.forEach((m)=>{
-        tableHtml+=`<th scope="col">${m}</th>`
-    });
-    tableHtml+="</tr></thead><tbody>";
-    for(let i=0;i<markets.length;i++){
-        tableHtml+=`<tr><th scope="row">${markets[i]}</th>`;
-        for(let j=0;j<markets.length;j++){
-            let bkg = "";
-            if(corrMatrix[i][j]>=upperThreshold){
-                bkg="background-color: green";
+    if(corrMatrix){
+        corrMatrixCache = corrMatrix;
+        let markets = getSelectedMarkets();
+        let upperThreshold = document.getElementById("correlationUpperThreshold").value;
+        let  lowerThreshold = document.getElementById("correlationLowerThreshold").value;
+        tableHtml = `<thead><tr style="position:sticky; top:0; background-color:white"><th scope="col"></th>`;
+        markets.forEach((m)=>{
+            tableHtml+=`<th scope="col">${m}</th>`
+        });
+        tableHtml+=`<th scope="col"></th></tr></thead><tbody>`;
+        for(let i=0;i<markets.length;i++){
+            tableHtml+=`<tr><th scope="row" style="position:sticky;left:0;background-color:white">${markets[i]}</th>`;
+            for(let j=0;j<markets.length;j++){
+                let value = corrMatrix[i][j];
+                if((correlationTriangular.checked && j<i) || (correlationValidTitles.checked && value < upperThreshold && value > lowerThreshold)){
+                    tableHtml+="<td></td>";
+                }
+                else{
+                    let bkg = "";
+                    let alphaStart = 0.3;
+                    if(j!=i){
+                        if(value>=upperThreshold){   
+                            let prop = (value-upperThreshold) * (1-alphaStart) / (1-upperThreshold);
+                            bkg=`background-color: rgb(0,255,0,${alphaStart+prop})`;
+                        }
+                        if(value<=lowerThreshold){
+                            let prop = (value-lowerThreshold) * (1-alphaStart) / (-1-lowerThreshold);
+                            bkg=`background-color: rgb(255,0,0,${alphaStart+prop})`;
+                        }
+                    }
+                    tableHtml+=`<td title="${markets[i]} - ${markets[j]}" style="${bkg}">${value}</td>`;    
+                }
             }
-            if(corrMatrix[i][j]<=lowerThreshold){
-                bkg="background-color: red";
-            }
-            tableHtml+=`<td title="${markets[i]} - ${markets[j]}" style="${bkg}">${corrMatrix[i][j]}</td>`;
+    
+            tableHtml+=`<th scope="row">${markets[i]}</th></tr>`
         }
-
-        tableHtml+="</tr>"
+        tableHtml+="</tbody>";
+        correlationTable.innerHTML = tableHtml;
+    
     }
-    tableHtml+="</tbody>";
-    correlationTable.innerHTML = tableHtml;
 }
 
 

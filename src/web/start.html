@@ -114,20 +114,35 @@
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="bd">Beta Daily</div>
+                        <div class="bd">Beta/Beta Daily</div>
                         <div style="color: rgb(49, 49, 49);" id="comparisonBetaDaily">1.3</div>
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="bd">Beta Weekly</div>
+                        <div class="bd">Beta/Beta Weekly</div>
                         <div style="color: rgb(49, 49, 49);" id="comparisonBetaWeekly">1.3</div>
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="bd">Beta Monthly</div>
+                        <div class="bd">Beta/Beta Monthly</div>
                         <div style="color: rgb(49, 49, 49);" id="comparisonBetaMonthly">1.3</div>
                     </div>
                     <hr>
+                    <div class="flex">
+                        <div class="bd">Delta Trend Daily</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonDeltaTrendDaily">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="bd">Delta Trend Weekly</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonDeltaTrendWeekly">1.3</div>
+                    </div>
+                    <hr>
+                    <div class="flex">
+                        <div class="bd">Delta Trend Monthly</div>
+                        <div style="color: rgb(49, 49, 49);" id="comparisonDeltaTrendMonthly">1.3</div>
+                    </div>
+                    <hr>   
                     <div class="flex">
                         <button class="btn btn-outline-dark" onclick="runSubdivision([comparisonTitle1.value, comparisonTitle2.value]);">Run Subdivision</button>
                     </div>
@@ -139,11 +154,13 @@
             <div id="comparisonChartDelta" class="chart"></div>
             <div id="comparisonChartDeltaValues" class="chart"></div>
             <div id="comparisonChartRatio" class="chart"></div>
+            <div id="comparisonChartDeltaRatio" class="chart"></div>
         </div>
         
 
     </div>
-
+    <button class="btn btn-outline-dark mt-3 ml-4"  onclick="openStatsPages(getSelectedMarkets());">Open All Titles</button>
+    <button class="btn btn-outline-dark mt-3 ml-4"  onclick="closeStatsPages(getSelectedMarkets());">Close All Titles</button>
 
     
     <div id="statsPageContainer"> 
@@ -155,27 +172,32 @@
                 <div class="flex">
                     <div class="bd w-200">upper threshold</div>
                     <div class="input-group mb-1">
-                        <input style="height: 30px;" value="0.6" type="number" class="form-control" id="correlationUpperThreshold" onchange="">
+                        <input style="height: 30px;" value="0.6" type="number" class="form-control" id="correlationUpperThreshold" onchange="createCorrelationTable(corrMatrixCache);" >
                     </div>
                 </div>
                 <hr>
                 <div class="flex">
                     <div class="bd w-200">lower threshold</div>
                     <div class="input-group mb-1">
-                        <input style="height: 30px;" value="-0.6" type="number" class="form-control" id="correlationLowerThreshold" onchange="">
+                        <input style="height: 30px;" value="-0.6" type="number" class="form-control" id="correlationLowerThreshold" onchange="createCorrelationTable(corrMatrixCache);" >
                     </div>
                 </div>
                 <hr>
-                <div class="flex">
-                    <div class="bd">show only valid titles</div>
-                    <div style="color: rgb(49, 49, 49);" id="comparisonBetaDaily">1.3</div>
-                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="correlationValidTitles" onchange="createCorrelationTable(corrMatrixCache);"  >
+                    <label class="form-check-label">show only valid titles</label>
+                  </div>
+                <hr>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="correlationTriangular" onchange="createCorrelationTable(corrMatrixCache);" checked>
+                    <label class="form-check-label">triangular matrix</label>
+                  </div>
                 <hr>
                 <div class="flex">
                     <button class="btn btn-outline-dark" onclick="runCorrelationTable();">Create Table</button>
                 </div>
             </div>
-            <div class="table-responsive">
+            <div class="correlationTableContainer">
                 <table class="table table-striped mt-4" id="correlationTable">
 
                 </table>

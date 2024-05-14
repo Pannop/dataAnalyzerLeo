@@ -23,3 +23,7 @@ hr{
     margin: 0.5rem 0 !important;
     color: rgb(96, 96, 96);
 }
+
+.btn-info{
+    background-color: #5a767a !important;
+}

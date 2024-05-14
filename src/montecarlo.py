@@ -34,19 +34,31 @@ def calculateMontecarlo(data, simulations, futureDataNum):
 def calculateMontecarloV2(data, simulations, futureDataNum):
 
     vals = [v["value"] for v in data]
-    dfInput = pd.DataFrame([vals, vals]).T
+    initialPortfolio = vals[-1]
+    dfInput = pd.DataFrame([vals]).T
     ret = dfInput.pct_change()
     mean = ret.mean()
     cov = ret.cov()
 
-    weights = [1,0]
+    weights = [1]
 
     meanM = np.full(shape=(futureDataNum, len(weights)), fill_value=mean).T
     portfolio_sim = np.full(shape=(futureDataNum, simulations), fill_value=0.0)
-
     for s in range(simulations):
-        #z = np.random
-        pass
+        z = np.random.normal(size=(futureDataNum, len(weights)))
+        l = np.linalg.cholesky(cov)
+        dailyRet = meanM + np.inner(l, z)
+        portfolio_sim[:,s] = np.cumprod(np.inner(weights, dailyRet.T)+1)*initialPortfolio
+    
+    final_mean = []
+    for i in range(len(portfolio_sim)):
+        final_mean.append(portfolio_sim[i].mean())
+    
+    plt.plot(portfolio_sim)
+    plt.show()
+    print(final_mean[-1])
+    plt.plot(final_mean)
+    plt.show()
 
     
 

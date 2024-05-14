@@ -28,8 +28,6 @@ fileIn.close()
 mm = MarketMatrix(l, "FTSEMIB.MI", CACHE_FILE)
 
  
-
-
 frontEndManager.__init__(1200, 900, mm)  
 frontEndManager.start()
 

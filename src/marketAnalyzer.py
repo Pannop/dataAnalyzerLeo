@@ -229,24 +229,32 @@ class MarketMatrix:
 
 
     def createCorrelationMatrix(self, markets, fromDate, toDate, interval, type):
-        data = self.getMarketsData(markets, fromDate, toDate, interval, type)
-        dataMat = []
-        for m in markets:
-            dataMat.append([d["value"] for d in data[m]])
-        df = pd.DataFrame(dataMat).T
-        return df.corr()
+        dataMat = [[0 for j in range(len(markets))] for i in range(len(markets))]
+        for i in range(len(markets)):
+            for j in range(len(markets)):
+                if(i < j):
+                    data = self.getMarketsData([markets[i], markets[j]], fromDate, toDate, interval, type)
+                    df = pd.DataFrame([[d["value"] for d in data[markets[i]]], [d["value"] for d in data[markets[j]]]]).T
+                    cor = round(df.corr()[0][1], 3)
+                    dataMat[i][j] = cor
+                    dataMat[j][i] = cor
+
+                if(i==j):
+                    dataMat[i][j] = 1
+        return dataMat
             
 
     def loadData(self, fromYear=0, dayStep=1, loadOnlyCache=False):
         if((self.cache==None or self.cache["date"]!=str(datetime.date.today()) or self.cache["indexName"]!=self.indexName or self.cache["marketList"]!=self.marketList) and not loadOnlyCache):
-            self.cache={"date":str(datetime.date.today())}
+            cache={"date":str(datetime.date.today())}
             try:
                 self.loadMarketData(fromYear,dayStep)
                 self.loadIndexData(fromYear,dayStep)
-                self.cache["index"]=self.indexData
-                self.cache["market"]=self.marketData
-                self.cache["indexName"]=self.indexName
-                self.cache["marketList"]=self.marketList
+                cache["index"]=self.indexData
+                cache["market"]=self.marketData
+                cache["indexName"]=self.indexName
+                cache["marketList"]=self.marketList
+                self.cache = cache
                 return
             except ConnectionError:
                 print("Connection Error: using cache")
