@@ -366,16 +366,6 @@ function applyChart(formattedData, elemId, dataChartCode){
     },1);
 }
 
-function loadStats(){
-    str = `
-        <div class="statsPage">
-            <h3>Stats</h3>
-            <div class="statsPageContent">
-                ollare ollare
-            </div>
-        </div>
-    `
-}
 
 function runCorrelationTable(){
     eel.calculateCorrelationMatrix(getSelectedMarkets(), marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue());
@@ -415,7 +405,7 @@ function createCorrelationTable(corrMatrix){
                             bkg=`background-color: rgb(255,0,0,${alphaStart+prop})`;
                         }
                     }
-                    tableHtml+=`<td title="${markets[i]} - ${markets[j]}" style="${bkg}">${value}</td>`;    
+                    tableHtml+=`<td title="${markets[i]} - ${markets[j]}" style="${bkg}" onclick="setComparison('${markets[i]}', '${markets[j]}');comparisonTitle1.scrollIntoView();">${value}</td>`;    
                 }
             }
     
@@ -446,3 +436,16 @@ function dateToString(date){
     return date.getDate()+"/"+(date.getMonth()+1)+"/"+(date.getYear()+1900);
 }
 
+
+function switchComparison(){
+    let tmp = comparisonTitle1.value;
+    comparisonTitle1.value = comparisonTitle2.value;
+    comparisonTitle2.value = tmp;
+    updateStatistics();
+}
+
+function setComparison(title1, title2){
+    comparisonTitle1.value = title1;
+    comparisonTitle2.value = title2;
+    updateStatistics();
+}
