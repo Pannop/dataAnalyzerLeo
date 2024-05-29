@@ -29,7 +29,7 @@ def getBIMarketData(symbol):
     return req.json()
 
 
-def getYaMarketData(symbol,interval="1d", retryCount = 0):
+def getYaMarketData(symbol, lastDate, interval="1d", retryCount = 0):
     t = str(time.time()).split(".")[0]
     header = {
     "Host": "query1.finance.yahoo.com",
@@ -48,12 +48,12 @@ def getYaMarketData(symbol,interval="1d", retryCount = 0):
     "Cache-Control": "no-cache",
     "domain-id": "it"}
     try:    
-        req = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?symbol={symbol}&period1=0&period2={t}&useYfid=true&interval={interval}&includePrePost=true&events=div|split|earn&lang=it-IT&region=IT&crumb=bZtbC8282C3&corsDomain=it.finance.yahoo.com", headers=header)
+        req = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?symbol={symbol}&period1={lastDate}&period2={t}&useYfid=true&interval={interval}&includePrePost=true&events=div|split|earn&lang=it-IT&region=IT&crumb=bZtbC8282C3&corsDomain=it.finance.yahoo.com", headers=header)
     except:
         if(retryCount==100):
             raise ConnectionError()
         print("retrying")
-        return getYaMarketData(symbol, interval, retryCount+1)
+        return getYaMarketData(symbol, lastDate, interval, retryCount+1)
     return req.json()
 
 def calculateBIDelta(data, fromYear=0, dayStep=1):
@@ -67,7 +67,7 @@ def calculateBIDelta(data, fromYear=0, dayStep=1):
 def getDeltas(x, y):
         deltas = []
         dayStep=1
-        for i in range(len(x)):
+        for i in range(1, len(x)):
             if(x[i] and y[i] and x[i-dayStep] and y[i-dayStep]):
                 deltas.append({"time":str(datetime.date.fromtimestamp(x[i])), "timestamp":x[i], "deltaPerc":round((y[i]-y[i-dayStep])/y[i-dayStep], 7),"delta":(y[i]-y[i-dayStep]),"log": np.log(abs(y[i]/y[i-dayStep])), "value":y[i]})
       
@@ -75,7 +75,7 @@ def getDeltas(x, y):
 
         return deltas
 
-def calculateYaDelta(data, fromYear=0, dayStep=1):
+def calculateYaDelta(data):
     
     x=data["chart"]["result"][0]["timestamp"]
 
@@ -123,19 +123,48 @@ class MarketMatrix:
         self.CORRISPONDECE_THRESHOLD = 0.6
         self.cacheFile = cacheFile
 
+
+    def setData(self, data, title, interval, unit):
+        d=data
+        lastDate=0
+        cache=None
+        if(title!=self.indexName):
+            d=data[title]
+        try:
+            if(title!=self.indexName):
+                lastDate=self.cache["market"][title][interval]["open"][-1]["timestamp"]
+                cache=self.cache["market"][title][interval]
+            else:
+                lastDate=self.cache["index"][interval]["open"][-1]["timestamp"]
+                cache=self.cache["index"][interval]
+        except:
+            pass
+        newData = calculateYaDelta(getYaMarketData(title, lastDate, unit))
+        if(cache):
+            for x in newData:
+                newData[x] = cache[x]+newData[x]
+            pass
+        d[interval] = newData
+
         
     def loadMarketData(self, fromYear=0, dayStep=1):
         for m in self.marketList:
             print(f'getting {m}')
             self.marketData[m] = {}
-            self.marketData[m]["d"] = calculateYaDelta(getYaMarketData(m, "1d"), fromYear, dayStep)
-            self.marketData[m]["wk"] = calculateYaDelta(getYaMarketData(m, "1wk"), fromYear, dayStep)
-            self.marketData[m]["mo"] = calculateYaDelta(getYaMarketData(m, "1mo"), fromYear, dayStep)
+            self.setData(self.marketData, m, "d", "1d")
+            self.setData(self.marketData, m, "wk", "1wk")
+            self.setData(self.marketData, m, "mo", "1mo")
+            #self.marketData[m]["d"] = calculateYaDelta(getYaMarketData(m, 0, "1d"), fromYear, dayStep)
+            #self.marketData[m]["wk"] = calculateYaDelta(getYaMarketData(m,0, "1wk"), fromYear, dayStep)
+            #self.marketData[m]["mo"] = calculateYaDelta(getYaMarketData(m,0, "1mo"), fromYear, dayStep)
 
     def loadIndexData(self, fromYear=0, dayStep=1):
-        self.indexData["d"] = calculateYaDelta(getYaMarketData(self.indexName, "1d"), fromYear, dayStep)
-        self.indexData["wk"] = calculateYaDelta(getYaMarketData(self.indexName, "1wk"), fromYear, dayStep)
-        self.indexData["mo"] = calculateYaDelta(getYaMarketData(self.indexName, "1mo"), fromYear, dayStep)
+        self.setData(self.indexData, self.indexName, "d", "1d")
+        self.setData(self.indexData, self.indexName, "wk", "1wk")
+        self.setData(self.indexData, self.indexName, "mo", "1mo")
+        #self.indexData["d"] = calculateYaDelta(getYaMarketData(self.indexName,0, "1d"), fromYear, dayStep)
+        #self.indexData["wk"] = calculateYaDelta(getYaMarketData(self.indexName,0, "1wk"), fromYear, dayStep)
+        #self.indexData["mo"] = calculateYaDelta(getYaMarketData(self.indexName,0, "1mo"), fromYear, dayStep)
 
             
     def calculateMarketCorrelation(self):
@@ -212,6 +241,14 @@ class MarketMatrix:
             return round(summt(data0, av0, data1, av1) / summt(data1, av1, data1, av1), 4)
         except:
             return "N/D"
+        
+    def calculateBetaV2(self, data0, data1, correlation):
+        try:
+            std0 = np.std(data0)
+            std1 = np.std(data1)
+            return round(correlation* (std0/std1), 4)
+        except:
+            return "N/D"
 
     
     def calculateIndexBetas(self):
@@ -259,7 +296,7 @@ class MarketMatrix:
             except ConnectionError:
                 print("Connection Error: using cache")
                 
- 
+        print(self.cache["index"]["d"]["open"][-10:])
         self.indexData = self.cache["index"]
         self.marketData = self.cache["market"]  
 

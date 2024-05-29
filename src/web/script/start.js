@@ -15,6 +15,7 @@ var correlationTriangular = document.getElementById("correlationTriangular");
 var TAG_RATIO = "ratio";
 var TAG_SUM_PREC = "sumprec";
 var TAG_SCALED = "scaled";
+var TAG_SAME_START = "samestart";
 
 var baseData = null;
 
@@ -125,15 +126,12 @@ function setStats(){
 }
 
 eel.expose(applyStats);
-function applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, deltaTrendDaily, deltaTrendWeekly, deltaTrendMonthly, elemsId){
+function applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, elemsId){
     document.getElementById(elemsId+"Correlation").innerHTML = correlation;
     document.getElementById(elemsId+"WeightedCorrelation").innerHTML = weightedCorrelation;
     document.getElementById(elemsId+"BetaDaily").innerHTML = betaDaily;
     document.getElementById(elemsId+"BetaWeekly").innerHTML = betaWeekly;
     document.getElementById(elemsId+"BetaMonthly").innerHTML = betaMonthly;
-    document.getElementById(elemsId+"DeltaTrendDaily").innerHTML = deltaTrendDaily;
-    document.getElementById(elemsId+"DeltaTrendWeekly").innerHTML = deltaTrendWeekly;
-    document.getElementById(elemsId+"DeltaTrendMonthly").innerHTML = deltaTrendMonthly;
 }
 
 
@@ -184,33 +182,18 @@ function createStatsPages(){
                         </div>
                         <hr>
                         <div class="flex">
-                            <div class="bd">Beta/Beta Daily</div>
+                            <div class="bd">Beta Daily</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}BetaDaily">1.3</div>
                         </div>
                         <hr>
                         <div class="flex">
-                            <div class="bd">Beta/Beta Weekly</div>
+                            <div class="bd">Beta Weekly</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}BetaWeekly">1.3</div>
                         </div>
                         <hr>
                         <div class="flex">
-                            <div class="bd">Beta/Beta Monthly</div>
+                            <div class="bd">Beta Monthly</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}BetaMonthly">1.3</div>
-                        </div>
-                        <hr>
-                        <div class="flex">
-                            <div class="bd">Delta Trend Daily</div>
-                            <div style="color: rgb(49, 49, 49);" id="market${title}DeltaTrendDaily">1.3</div>
-                        </div>
-                        <hr>
-                        <div class="flex">
-                            <div class="bd">Delta Trend Weekly</div>
-                            <div style="color: rgb(49, 49, 49);" id="market${title}DeltaTrendWeekly">1.3</div>
-                        </div>
-                        <hr>
-                        <div class="flex">
-                            <div class="bd">Delta Trend Monthly</div>
-                            <div style="color: rgb(49, 49, 49);" id="market${title}DeltaTrendMonthly">1.3</div>
                         </div>
                         <hr>
                         <div class="flex">
@@ -222,7 +205,7 @@ function createStatsPages(){
                         </div>
                         <hr>
                         <div class="flex">
-                            <button class="btn btn-outline-dark" onclick="runMontecarlo('${title}');">Run Montecarlo</button>
+                            <button class="btn btn-outline-dark" onclick="runPrevision(['${title}']);">Run Prevision</button>
                         </div>
                     </div>
                     <div id="market${title}ChartValues" class="chart"></div>
@@ -281,7 +264,8 @@ function drawCharts(){
         eel.formatData(selected, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "marketChart", addChartDataTable(selected,""));
         
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDelta", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "percentage trend", [TAG_SUM_PREC], "percentage"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "scalar factor Trend", [TAG_SCALED]));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "log", "comparisonChartLog", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "log trend", [TAG_SUM_PREC], "log"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "same start", [TAG_SAME_START]));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaValues", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta values", [], "percentage"));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "ratio", [TAG_RATIO], "value"));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta ratio", [TAG_RATIO], "value"));
@@ -339,6 +323,14 @@ function applyChart(formattedData, elemId, dataChartCode){
                     let factorScale = formattedData[0][1]/formattedData[0][j];
                     for(let i=0;i<formattedData.length;i++){
                         formattedData[i][j] *= factorScale;
+                    }
+                }
+            }
+            else if(t == TAG_SAME_START){
+                for(let j=2;j<formattedData[0].length; j++){
+                    let factorAdditional = formattedData[0][1]-formattedData[0][j];
+                    for(let i=0;i<formattedData.length;i++){
+                        formattedData[i][j] += factorAdditional;
                     }
                 }
             }

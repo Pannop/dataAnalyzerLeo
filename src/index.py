@@ -9,7 +9,7 @@ import math
 import matplotlib as mp
 from marketAnalyzer import *
 import frontEndManager
-
+from alert import AlertChecker
 
 
 
@@ -23,11 +23,17 @@ CACHE_FILE="./cache"
 
 
 fileIn = open("resources/marketListCode.txt", "r")
-l = fileIn.read().split("\n")
+marketList = fileIn.read().split("\n")
 fileIn.close()
-mm = MarketMatrix(l, "FTSEMIB.MI", CACHE_FILE)
+
+fileIn = open("resources/alertListCode.txt", "r")
+alertList = fileIn.read().split("\n")
+fileIn.close()
+
+mm = MarketMatrix(marketList, "FTSEMIB.MI", CACHE_FILE)
+ac = AlertChecker(alertList)
 
  
-frontEndManager.__init__(1200, 900, mm)  
+frontEndManager.__init__(1200, 900, mm, ac)  
 frontEndManager.start()
 

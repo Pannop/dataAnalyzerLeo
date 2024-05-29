@@ -2,19 +2,20 @@ var titlesSubdivision = []
 var subdivision_interval;
 var subdivision_offset;
 var subdivision_datatype;
+var subdivision_chartHeight;
 
 function runSubdivision(titles){
     titlesSubdivision = titles;
     openSimulationPanel();
     insertHtmlSubdivision();
     setTimeout(()=>{
-        updateVariables();
+        updateVariablesSubdivision();
         updateSubdivision();
     },1);
 
 }
 
-function updateVariables(){
+function updateVariablesSubdivision(){
     subdivision_interval = document.getElementById("subdivision_interval");
     subdivision_offset = document.getElementById("subdivision_offset");
     subdivision_datatype = document.getElementById("subdivision_datatype");
@@ -61,13 +62,11 @@ function insertHtmlSubdivision(){
 }
 
 function applySubdivision(formattedData, dataChartCode){
-    intervalDays = parseInt(subdivision_interval.value);
-    offset = parseFloat(subdivision_offset.value);
-    splits = Math.floor(formattedData.length/intervalDays);
-    markets = formattedData[0].length-1;
-    pointer = formattedData.length-1;
-    startPoint = formattedData.length - splits*intervalDays;
-    data = []
+    let intervalDays = parseInt(subdivision_interval.value);
+    let offset = parseFloat(subdivision_offset.value);
+    let splits = Math.floor(formattedData.length/intervalDays);
+    let startPoint = formattedData.length - splits*intervalDays;
+    let data = []
     let startValues = [0];
     for(let i=0;i<intervalDays;i++){
         newData = [i];

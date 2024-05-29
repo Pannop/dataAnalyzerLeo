@@ -25,7 +25,7 @@
     </div>
     <div class="bottomContainer">
         <div style="min-width: 300px;">
-            <button class="btn btn-outline-dark mt-3 ml-4" disabled onclick="marketExportExcel(getSelectedMarkets());">Export All Excel</button>
+            <button class="btn btn-outline-dark mt-3 ml-4" onclick="runAlert();">Check Alerts</button>
         </div>
         <div>
             <label>data type:</label>
@@ -114,33 +114,18 @@
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="bd">Beta/Beta Daily</div>
+                        <div class="bd">Beta Daily</div>
                         <div style="color: rgb(49, 49, 49);" id="comparisonBetaDaily">1.3</div>
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="bd">Beta/Beta Weekly</div>
+                        <div class="bd">Beta Weekly</div>
                         <div style="color: rgb(49, 49, 49);" id="comparisonBetaWeekly">1.3</div>
                     </div>
                     <hr>
                     <div class="flex">
-                        <div class="bd">Beta/Beta Monthly</div>
+                        <div class="bd">Beta Monthly</div>
                         <div style="color: rgb(49, 49, 49);" id="comparisonBetaMonthly">1.3</div>
-                    </div>
-                    <hr>
-                    <div class="flex">
-                        <div class="bd">Delta Trend Daily</div>
-                        <div style="color: rgb(49, 49, 49);" id="comparisonDeltaTrendDaily">1.3</div>
-                    </div>
-                    <hr>
-                    <div class="flex">
-                        <div class="bd">Delta Trend Weekly</div>
-                        <div style="color: rgb(49, 49, 49);" id="comparisonDeltaTrendWeekly">1.3</div>
-                    </div>
-                    <hr>
-                    <div class="flex">
-                        <div class="bd">Delta Trend Monthly</div>
-                        <div style="color: rgb(49, 49, 49);" id="comparisonDeltaTrendMonthly">1.3</div>
                     </div>
                     <hr>   
                     <div class="flex">
@@ -152,6 +137,7 @@
                 </div>
             </div>
             <div id="comparisonChartDelta" class="chart"></div>
+            <div id="comparisonChartLog" class="chart"></div>
             <div id="comparisonChartDeltaValues" class="chart"></div>
             <div id="comparisonChartRatio" class="chart"></div>
             <div id="comparisonChartDeltaRatio" class="chart"></div>
@@ -214,6 +200,7 @@
 
     <script src="script/start.js"></script>
     <script src="script/subdivision.js"></script>
-    <script src="script/montecarlo.js"></script>
+    <script src="script/prevision.js"></script>
+    <script src="script/alert.js"></script>
 </body>
 </html>
