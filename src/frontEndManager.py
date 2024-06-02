@@ -161,8 +161,8 @@ def calculatePrevision(market, fromDate, toDate, interval, type, simulations, da
 
 
 @eel.expose
-def checkAlert(volumePerc, valuePerc, minVolume):
-    alertChecker.fastCheck(volumePerc, valuePerc, minVolume)
+def checkAlert(volumePerc, valuePerc, minVolume, regions, progressBarId):
+    alertChecker.check(volumePerc, valuePerc, minVolume, regions, progressBarId)
     eel.applyAlertTable(alertChecker.alerts)
 
 

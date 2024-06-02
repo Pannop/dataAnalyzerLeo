@@ -1,0 +1,15 @@
+.regionCheckBox{
+    width: 200px;
+}
+
+#alert_regionMenu{
+    position: absolute;
+    border: 2px solid gray;
+    border-radius: 10px;
+    background-color: aliceblue;
+    padding: 5px;
+}
+
+#alert_regionMenu .btn{
+    width: 100px;
+}

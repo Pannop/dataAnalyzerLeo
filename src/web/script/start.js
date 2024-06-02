@@ -441,3 +441,9 @@ function setComparison(title1, title2){
     comparisonTitle2.value = title2;
     updateStatistics();
 }
+
+
+eel.expose(setProgress);
+function setProgress(progressBarId, value){
+    document.getElementById(progressBarId).style.width = `${value}%`;
+}

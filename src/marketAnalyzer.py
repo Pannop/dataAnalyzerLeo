@@ -296,7 +296,6 @@ class MarketMatrix:
             except ConnectionError:
                 print("Connection Error: using cache")
                 
-        print(self.cache["index"]["d"]["open"][-10:])
         self.indexData = self.cache["index"]
         self.marketData = self.cache["market"]  
 

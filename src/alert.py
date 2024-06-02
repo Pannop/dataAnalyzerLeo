@@ -2,6 +2,7 @@ import pandas as pd
 import eel
 import time
 import requests
+import re
 
 
 requestHeader = {
@@ -67,21 +68,46 @@ def orderObjectListBy(list, column):
                 list[j] = tmp
 
 
-def getYaMarketData( retryCount = 0):
+regionsNames = {'Belgium': 'be', 'Austria': 'at', 'Argentina': 'ar', 'Australia': 'au', 'Brazil': 'br', 'Switzerland': 'ch', 'Canada': 'ca', 'Chile': 'cl', 'China': 'cn', 'Germany': 'de', 'Estonia': 'ee', 'Czechia': 'cz', 'Denmark': 'dk', 'Egypt': 'eg', 'Finland': 'fi', 'United Kingdom': 'gb', 'Indonesia': 'id', 'France': 'fr', 'Spain': 'es', 'Greece': 'gr', 'Hong Kong SAR China': 'hk', 'Israel': 'il', 'Hungary': 'hu', 'Ireland': 'ie', 'New Zealand': 'nz', 'Mexico': 'mx', 'Philippines': 'ph', 'Poland': 'pl', 'Netherlands': 'nl', 'Qatar': 'qa', 'Saudi Arabia': 'sa', 'Singapore': 'sg', 'Norway': 'no', 'Malaysia': 'my', 'Latvia': 'lv', 'Pakistan': 'pk', 'Portugal': 'pt', 'Russia': 'ru', 'Sweden': 'se', 'Peru': 'pe', 'Lithuania': 'lt', 'Italy': 'it', 'Iceland': 'is', 'Japan': 'jp', 'Kuwait': 'kw', 'South Korea': 'kr', 'India': 'in', 'Sri Lanka': 'lk', 'Thailand': 'th', 'Suriname': 'sr', 'United States': 'us', 'Taiwan': 'tw', 'Venezuela': 've', 'South Africa': 'za', 'Vietnam': 'vn', 'Turkey': 'tr'}
+regionsLoaded = []
+
+def getYaMarketData(progressBarId, regions):
     CRUMB = "nQGWAqVg.Xy"
     #req = requests.get(f"https://query1.finance.yahoo.com/v1/finance/screener/instrument/equity/new?crumb={CRUMB}&lang=it-IT&region=IT&corsDomain=it.finance.yahoo.com", headers=requestHeader)
     #payload = {"requests":{"g0":{"resource":"StreamService","operation":"read","params":{"ui":{"editorial_featured_count":1,"image_quality_override":1,"link_out_allowed":1,"ntk_bypassA3c":1,"pubtime_maxage":-1,"storyline_count":2,"storyline_min":2,"thumbnail_size":100,"view":"sidekick","editorial_content_count":0,"finance_upsell_threshold":4},"category":"SIDEKICK:TOPSTORIES","forceJpg":1,"releasesParams":{"limit":20,"offset":0},"offnet":{"include_lcp":1,"use_preview":1},"useNCP":1,"ads":{"ad_polices":1,"count":25,"frequency":4,"generic_viewability":1,"partial_viewability":1,"pu":"finance.yahoo.com","se":4492794,"spaceid":1185835883,"start_index":2,"timeout":0,"type":"STRM,STRM_CONTENT","useHqImg":1,"useResizedImages":1},"batches":{"size":48,"timeout":500,"total":170},"blending_enabled":1,"enableAuthorBio":1,"max_exclude":10,"min_count":3,"service":{"specRetry":{"enabled":0}},"pageContext":{"pageType":"utility","subscribed":"0","tier":"0","enablePremium":"0","eventName":"","topicName":"","category":"","quoteType":"","calendarType":"","screenerType":"new","inTrial":"0","cryptoUser":"0","enableTrading":"0","hubName":""},"content_type":"screener","content_site":"finance","exclude_uuids":[]}}},"context":{"feature":"canvassOffnet,ccOnMute,disableCommentsMessage,debouncesearch100,deferDarla,disableMegaModalSa,ecmaModern,enable3pConsent,enableCCPAFooter,enableNewCCPAFooter,enableCMP,enableConsentData,enableEncryption,enableEVPlayer,enableFBRedirect,enableFreeFinRichSearch,enableGAMAds,enableGAMBrokerButtonEvent,enableGuceJs,enableGuceJsOverlay,enableNcpVideo,enablePortfolioBasicEolFlow,enablePrivacyUpdate,enableUpgradeLeafPage,enableVideoURL,enableYodleeErrorMsgCriOS,ncpPortfolioStream,ncpQspStream,ncpQspStreamV2,upgradeNCPQueries,ncpStream,ncpStreamIntl,ncpTopicStream,newContentAttribution,newLogo,notificationsServiceWorker,oathPlayer,relatedVideoFeatureOff,removeConversations,useNextGenHistory,videoNativePlaylist,enableComscoreUdm2,sunsetMotif2,enableUserPrefAPI,enableCustomSymbolsTotalGain,enableHeaderBidding,enablePortfolioHoldingsRedesign,enableOnlyBetaPortfoliosCreation,enablePortfolioHoldingsRedesignMweb,enableNCPChannel,enableSingleRail,enhanceAddToWL,article2_csn,enableStageAds,sponsoredAds,enableNativeBillboard,enableLiveDynamicData","bkt":"finance-IT-it-IT-def","crumb":{CRUMB},"device":"desktop","intl":"it","lang":"it-IT","partner":"none","prid":"6qqd7jhj5dvh6","region":"IT","site":"finance","tz":"Europe/Rome","ver":"0.10101010102.490","ecma":"modern"}}
     #req = requests.post(f"https://it.finance.yahoo.com/_finance_doubledown/api/resource?bkt=finance-IT-it-IT-def&crumb=nQGWAqVg.Xy&device=desktop&ecma=modern&feature=canvassOffnet%2CccOnMute%2CdisableCommentsMessage%2Cdebouncesearch100%2CdeferDarla%2CdisableMegaModalSa%2CecmaModern%2Cenable3pConsent%2CenableCCPAFooter%2CenableNewCCPAFooter%2CenableCMP%2CenableConsentData%2CenableEncryption%2CenableEVPlayer%2CenableFBRedirect%2CenableFreeFinRichSearch%2CenableGAMAds%2CenableGAMBrokerButtonEvent%2CenableGuceJs%2CenableGuceJsOverlay%2CenableNcpVideo%2CenablePortfolioBasicEolFlow%2CenablePrivacyUpdate%2CenableUpgradeLeafPage%2CenableVideoURL%2CenableYodleeErrorMsgCriOS%2CncpPortfolioStream%2CncpQspStream%2CncpQspStreamV2%2CupgradeNCPQueries%2CncpStream%2CncpStreamIntl%2CncpTopicStream%2CnewContentAttribution%2CnewLogo%2CnotificationsServiceWorker%2CoathPlayer%2CrelatedVideoFeatureOff%2CremoveConversations%2CuseNextGenHistory%2CvideoNativePlaylist%2CenableComscoreUdm2%2CsunsetMotif2%2CenableUserPrefAPI%2CenableCustomSymbolsTotalGain%2CenableHeaderBidding%2CenablePortfolioHoldingsRedesign%2CenableOnlyBetaPortfoliosCreation%2CenablePortfolioHoldingsRedesignMweb%2CenableNCPChannel%2CenableSingleRail%2CenhanceAddToWL%2Carticle2_csn%2CenableStageAds%2CsponsoredAds%2CenableNativeBillboard%2CenableLiveDynamicData&intl=it&lang=it-IT&partner=none&prid=6qqd7jhj5dvh6&region=IT&site=finance&tz=Europe%2FRome&ver=0.10101010102.490", headers=requestHeader, json=payload)
     data = []
-    for o in range(0, 3000, 100):
-        payload = {"size":100,"offset":o,"sortField":"intradaymarketcap","sortType":"DESC","quoteType":"EQUITY","topOperator":"AND","query":{"operator":"AND","operands":[{"operator":"gt","operands":["avgdailyvol3m",0]},{"operator":"gt","operands":["intradaypricechange",0]}]},"userId":"","userIdType":"guid"}
-        req = requests.post(f"https://query2.finance.yahoo.com/v1/finance/screener?crumb={CRUMB}&lang=it-IT&region=IT&formatted=true&corsDomain=it.finance.yahoo.com", headers=requestHeader2, json=payload).json()
-        reqList = req["finance"]["result"][0]["quotes"]
-        for d in reqList:
-            if d["averageDailyVolume3Month"]["raw"] > 0:
-                data.append({"symbol":d["symbol"], "valueDeltaPerc":d["regularMarketChangePercent"]["raw"], "volume":d["regularMarketVolume"]["raw"], "volumeAvg":d["averageDailyVolume3Month"]["raw"], "volumeDeltaPerc":(d["regularMarketVolume"]["raw"]-d["averageDailyVolume3Month"]["raw"])*100/d["averageDailyVolume3Month"]["raw"]} )
+    name=None
+    rCount = 0
+    eel.setProgress(progressBarId, 0)
+    for r in regions:
+        for o in range(0, 10000, 250):
+            payload = {"size":250,"offset":o,"sortField":"dayvolume","sortType":"DESC","quoteType":"EQUITY","topOperator":"AND","query":{"operator":"AND","operands":[{"operator":"or","operands":[{"operator":"EQ","operands":["region", regionsNames[r]]}]},{"operator":"gt","operands":["avgdailyvol3m",10]}]},"userId":"","userIdType":"guid"}
+            req = requests.post(f"https://query2.finance.yahoo.com/v1/finance/screener?crumb={CRUMB}&lang=it-IT&region=IT&formatted=true&corsDomain=it.finance.yahoo.com", headers=requestHeader2, json=payload).json()
+            reqList = req["finance"]["result"][0]["quotes"]
+            if(len(reqList)==0):
+                break
+            for d in reqList:
+                try:
+                    if d["averageDailyVolume3Month"]["raw"] > 0:
+                        try:
+                            name = d["shortName"]
+                        except KeyError:
+                            try:
+                                name = d["longName"]
+                            except KeyError:
+                                name = d["symbol"]
+                        
+                        data.append({"symbol":d["symbol"], "name":name, "region":r, "valueDeltaPerc":round(d["regularMarketChangePercent"]["raw"], 3), "volume":d["regularMarketVolume"]["raw"], "volumeAvg":d["averageDailyVolume3Month"]["raw"], "volumeDeltaPerc":round((d["regularMarketVolume"]["raw"]-d["averageDailyVolume3Month"]["raw"])*100/d["averageDailyVolume3Month"]["raw"]), "marketState":d["marketState"]} )
+                except KeyError:
+                    pass
+            total = req["finance"]["result"][0]["total"]
+            eel.setProgress(progressBarId, (rCount*100)/len(regions) + o*(1/len(regions)*100)/total)
+        rCount+=1
+    eel.setProgress(progressBarId, 100)
     print(len(data))
     return data
+
 
 class AlertChecker:
     
@@ -89,18 +115,22 @@ class AlertChecker:
         self.titleList = titleList
         self.data = None
         self.alerts = []
+        self.regions=[]
 
-    def getData(self):
+    def getData(self, progressBarId):
         try:
-            self.data = getYaMarketData()
+            self.data = getYaMarketData(progressBarId, self.regions)
+
         except ConnectionError:
             print("alert connection error")
 
 
 
-    def fastCheck(self, volumePerc, valuePerc, minVolume):
-        if(self.data==None):
-            self.getData()
+    def check(self, volumePerc, valuePerc, minVolume, regions, progressBarId):
+        
+        if(self.data==None or regions!=self.regions):
+            self.regions = regions
+            self.getData(progressBarId)
         self.alerts = [d for d in self.data if d["volumeAvg"]>minVolume and d["volumeDeltaPerc"]>=volumePerc and d["valueDeltaPerc"]>=valuePerc]
         orderObjectListBy(self.alerts, "volumeDeltaPerc")
             
