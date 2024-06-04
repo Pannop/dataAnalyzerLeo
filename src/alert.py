@@ -79,6 +79,7 @@ def getYaMarketData(progressBarId, regions):
     data = []
     name=None
     rCount = 0
+    markets = {}
     eel.setProgress(progressBarId, 0)
     for r in regions:
         for o in range(0, 10000, 250):
@@ -97,8 +98,16 @@ def getYaMarketData(progressBarId, regions):
                                 name = d["longName"]
                             except KeyError:
                                 name = d["symbol"]
-                        
-                        data.append({"symbol":d["symbol"], "name":name, "region":r, "valueDeltaPerc":round(d["regularMarketChangePercent"]["raw"], 3), "volume":d["regularMarketVolume"]["raw"], "volumeAvg":d["averageDailyVolume3Month"]["raw"], "volumeDeltaPerc":round((d["regularMarketVolume"]["raw"]-d["averageDailyVolume3Month"]["raw"])*100/d["averageDailyVolume3Month"]["raw"]), "marketState":d["marketState"]} )
+                        markets[d["fullExchangeName"]]=0
+                        data.append({"symbol":d["symbol"],
+                                    "name":name,
+                                    "region":r, 
+                                    "valueDeltaPerc":round(d["regularMarketChangePercent"]["raw"], 3), 
+                                    "volume":d["regularMarketVolume"]["raw"], 
+                                    "volumeAvg":d["averageDailyVolume3Month"]["raw"], 
+                                    "volumeDeltaPerc":round((d["regularMarketVolume"]["raw"]-d["averageDailyVolume3Month"]["raw"])*100/d["averageDailyVolume3Month"]["raw"]), 
+                                    "marketState":d["marketState"], 
+                                    "volumePrice":round(d["regularMarketPreviousClose"]["raw"]*d["regularMarketVolume"]["raw"])} )
                 except KeyError:
                     pass
             total = req["finance"]["result"][0]["total"]
@@ -106,6 +115,7 @@ def getYaMarketData(progressBarId, regions):
         rCount+=1
     eel.setProgress(progressBarId, 100)
     print(len(data))
+    print(markets.keys())
     return data
 
 
@@ -126,12 +136,15 @@ class AlertChecker:
 
 
 
-    def check(self, volumePerc, valuePerc, minVolume, regions, progressBarId):
+    def check(self, volumePerc, valuePerc, minVolume, minVolumePrice, regions, progressBarId):
         
         if(self.data==None or regions!=self.regions):
             self.regions = regions
             self.getData(progressBarId)
-        self.alerts = [d for d in self.data if d["volumeAvg"]>minVolume and d["volumeDeltaPerc"]>=volumePerc and d["valueDeltaPerc"]>=valuePerc]
+        self.alerts = [d for d in self.data if d["volumeAvg"]>minVolume and 
+                                                d["volumeDeltaPerc"]>=volumePerc and 
+                                                d["valueDeltaPerc"]>=valuePerc and
+                                                d["volumePrice"]>=minVolumePrice]
         orderObjectListBy(self.alerts, "volumeDeltaPerc")
             
             

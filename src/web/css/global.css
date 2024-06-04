@@ -28,3 +28,7 @@ hr{
 .btn-info{
     background-color: #5a767a !important;
 }
+
+.clickable{
+    cursor: pointer;
+}

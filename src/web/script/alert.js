@@ -1,6 +1,7 @@
 var alert_volumePerc;
 var alert_valuePerc;
 var alert_minVolume;
+var alert_minVolumePrice;
 var alert_regionMenu;
 var alert_results;
 
@@ -61,6 +62,7 @@ function updateVariablesAlert(){
     alert_volumePerc = document.getElementById("alert_volumePerc");
     alert_valuePerc = document.getElementById("alert_valuePerc");
     alert_minVolume = document.getElementById("alert_minVolume");
+    alert_minVolumePrice = document.getElementById("alert_minVolumePrice");
     alert_regionMenu = document.getElementById("alert_regionMenu");
     alert_results = document.getElementById("alert_results");
     alert_regionMenu.style.display="none";
@@ -124,7 +126,14 @@ function insertHtmlAlert(){
         <div class="flex">
             <div class="bd w-200">minimum average volume</div>
             <div class="input-group mb-1">
-                <input style="height: 30px;" value="5" type="number" class="form-control" id="alert_minVolume" onchange="updateAlert();">
+                <input style="height: 30px;" value="50" type="number" class="form-control" id="alert_minVolume" onchange="updateAlert();">
+            </div>
+        </div>
+        <hr>
+        <div class="flex">
+            <div class="bd w-200">minimum volume price</div>
+            <div class="input-group mb-1">
+                <input style="height: 30px;" value="1000" type="number" class="form-control" id="alert_minVolumePrice" onchange="updateAlert();">
             </div>
         </div>
         <hr>
@@ -158,18 +167,20 @@ function insertHtmlAlert(){
 
 
 function updateAlert(){
-    eel.checkAlert(parseFloat(alert_volumePerc.value), parseFloat(alert_valuePerc.value), parseInt(alert_minVolume.value), getSelectedRegions(), "simulationProgressBar");
+    eel.checkAlert(parseFloat(alert_volumePerc.value), parseFloat(alert_valuePerc.value), parseInt(alert_minVolume.value), parseInt(alert_minVolumePrice.value), getSelectedRegions(), "simulationProgressBar");
 }
 
 eel.expose(applyAlertTable);
 function applyAlertTable(alerts){
     let table = document.getElementById("simulationTable");
+    
     let html=`
     <tr>
         <th scope="col">Title</th>
         <th scope="col">Symbol</th>
         <th scope="col">Volume Delta</th>
         <th scope="col">Value Delta</th>         
+        <th scope="col">Volume Price</th>         
         <th scope="col">Region</th>         
         <th scope="col">Market State</th>         
     </tr>
@@ -178,9 +189,10 @@ function applyAlertTable(alerts){
         html+=`
         <tr>
             <th scope="row">${a["name"]}</th>
-            <td>${a["symbol"]}</td>
+            <td class="clickable" onclick="window.open('https://it.finance.yahoo.com/quote/${a["symbol"]}/','name')">${a["symbol"]}</td>
             <td>${a["volumeDeltaPerc"]} %</td>
             <td>${a["valueDeltaPerc"]} %</td>
+            <td>${a["volumePrice"]} $</td>
             <td>${a["region"]}</td>
             <td>${a["marketState"]}</td>
         </tr>
