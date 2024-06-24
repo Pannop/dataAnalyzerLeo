@@ -135,29 +135,31 @@ function applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, bet
 }
 
 
-function invertStatsPages(markets){
+function invertStatsPages(markets, manageCharts=true){
     markets.forEach((m)=>{
         let elem = document.getElementById("statsPageContent"+m);
         if(elem.style.display=="none")
-            openStatsPages([m]);
+            openStatsPages([m], manageCharts);
         else
-            closeStatsPages([m]);
+            closeStatsPages([m], manageCharts);
     });
 }
 
-function openStatsPages(markets){
+function openStatsPages(markets, drawCharts=true){
     markets.forEach((m)=>{
         let elem = document.getElementById("statsPageContent"+m);
         elem.style.display="block";
-        drawTitleCharts(m);
+        if(drawCharts)
+            drawTitleCharts(m);
     });
 }
 
-function closeStatsPages(markets){
+function closeStatsPages(markets, ereaseCharts=true){
     markets.forEach((m)=>{
         let elem = document.getElementById("statsPageContent"+m);
         elem.style.display="none";
-        ereaseTitleCharts(m);
+        if(ereaseCharts)
+            ereaseTitleCharts(m);
     });
 }
 

@@ -10,6 +10,7 @@ import matplotlib as mp
 from marketAnalyzer import *
 import frontEndManager
 from alert import AlertChecker
+from currencyCoverter import CurrencyConverter
 
 
 
@@ -30,10 +31,11 @@ fileIn = open("resources/alertListCode.txt", "r")
 alertList = fileIn.read().split("\n")
 fileIn.close()
 
+
 mm = MarketMatrix(marketList, "FTSEMIB.MI", CACHE_FILE)
-ac = AlertChecker(alertList)
+cc= CurrencyConverter()
+ac = AlertChecker(alertList, cc)
 
  
 frontEndManager.__init__(1200, 900, mm, ac)  
 frontEndManager.start()
-

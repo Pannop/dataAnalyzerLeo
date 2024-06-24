@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
+from scipy.fft import fft, rfft
+from scipy.fft import fftfreq, rfftfreq
 from pandas_datareader import data as pdr
 import matplotlib.pyplot as plt
 
@@ -148,5 +150,63 @@ def calculateHeston(data, simulations, futureDataNum):
         finalMean.append(df[i].mean())
     return finalMean
 
+def calculateHurst():
+    pass
+
+def calculateFourier(signal):
+
+    fourier = rfft(signal)
+
+    N = len(signal)
+    normalize = N/2
+
+    sampling_rate = 1
+    frequency_axis = rfftfreq(N, d=1.0/sampling_rate)
+    norm_amplitude = np.abs(fourier)/normalize
+    print(len(frequency_axis))
+    print(len(norm_amplitude))
+    plt.plot(frequency_axis, norm_amplitude)
+    plt.show()
+    return frequency_axis, norm_amplitude
+"""
+class Signal:
+  def __init__(self, amplitude=1, frequency=10, duration=1, sampling_rate=100.0, phase=0):
+    self.amplitude = amplitude
+    self.frequency = frequency
+    self.duration = duration
+    self.sampling_rate = sampling_rate
+    self.phase = phase
+    self.time_step = 1.0/self.sampling_rate
+    self.time_axis = np.arange(0, self.duration, self.time_step)
+  
+  def sine(self):
+    return self.amplitude*np.sin(2*np.pi*self.frequency*self.time_axis+self.phase)
+  
+  def cosine(self):
+    return self.amplitude*np.cos(2*np.pi*self.frequency*self.time_axis+self.phase)
     
-    
+signal_1hz = Signal(amplitude=3, frequency=1, sampling_rate=200, duration=4.3)
+sine_1hz = signal_1hz.sine()
+signal_20hz = Signal(amplitude=1, frequency=20, sampling_rate=200, duration=4.3)
+sine_20hz = signal_20hz.sine()
+signal_10hz = Signal(amplitude=0.5, frequency=10, sampling_rate=200, duration=4.3)
+sine_10hz = signal_10hz.sine()
+
+print(len(sine_10hz))
+
+# Sum the three signals to output the signal we want to analyze
+signal = sine_1hz + sine_20hz + sine_10hz
+plt.plot(signal)
+plt.show()
+
+freq, amp = calculateFourier(signal)
+
+
+signal = np.zeros(2000)
+for i in range(len(amp)):
+    if(round(amp[i], 10) > 0):
+        signal += Signal(amplitude=amp[i], frequency=freq[i], sampling_rate=200, duration=10).sine()
+
+plt.plot(signal)
+plt.show()
+"""

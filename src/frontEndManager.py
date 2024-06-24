@@ -7,6 +7,7 @@ import numpy as np
 from marketAnalyzer import MarketMatrix
 from alert import AlertChecker
 from prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2
+from threadStopper import threadStop
 
 eel.init("./src/web/")
 
@@ -23,11 +24,16 @@ def __init__(dimX, dimY, marketMatrixRef: MarketMatrix, alertCheckerRef: AlertCh
     global alertChecker
     alertChecker = alertCheckerRef
 
+def stopThreads(route, websockets):
+    if not websockets:
+        threadStop.stop = True
+        exit()
+
 def start():
     marketMatrix.loadCache()
     marketMatrix.loadData()
     marketMatrix.saveCache()
-    eel.start("start.html", size=winSize)
+    eel.start("start.html", size=winSize, close_callback=stopThreads, shutdown_delay=10)
 
 DATA_DIR = "./data/"
 def jsonToXlsx(data, excelFile="excelFile.xlsx"):
@@ -161,8 +167,16 @@ def calculatePrevision(market, fromDate, toDate, interval, type, simulations, da
 
 
 @eel.expose
-def checkAlert(volumePerc, valuePerc, minVolume, minVolumePrice, regions, progressBarId):
-    alertChecker.check(volumePerc, valuePerc, minVolume, minVolumePrice, regions, progressBarId)
+def checkAlert(volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, progressBarId):
+    alertChecker.check(volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, progressBarId)
     eel.applyAlertTable(alertChecker.alerts)
+
+@eel.expose
+def addAlertListener(num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate):
+    alertChecker.addListener(num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate)
+
+@eel.expose
+def removeAlertListener(num):
+    alertChecker.removeListener(num)
 
 

@@ -3,6 +3,11 @@ import eel
 import time
 import requests
 import re
+from datetime import datetime
+from currencyCoverter import CurrencyConverter
+from threading import Thread
+from threadStopper import threadStop
+
 
 
 requestHeader = {
@@ -71,7 +76,9 @@ def orderObjectListBy(list, column):
 regionsNames = {'Belgium': 'be', 'Austria': 'at', 'Argentina': 'ar', 'Australia': 'au', 'Brazil': 'br', 'Switzerland': 'ch', 'Canada': 'ca', 'Chile': 'cl', 'China': 'cn', 'Germany': 'de', 'Estonia': 'ee', 'Czechia': 'cz', 'Denmark': 'dk', 'Egypt': 'eg', 'Finland': 'fi', 'United Kingdom': 'gb', 'Indonesia': 'id', 'France': 'fr', 'Spain': 'es', 'Greece': 'gr', 'Hong Kong SAR China': 'hk', 'Israel': 'il', 'Hungary': 'hu', 'Ireland': 'ie', 'New Zealand': 'nz', 'Mexico': 'mx', 'Philippines': 'ph', 'Poland': 'pl', 'Netherlands': 'nl', 'Qatar': 'qa', 'Saudi Arabia': 'sa', 'Singapore': 'sg', 'Norway': 'no', 'Malaysia': 'my', 'Latvia': 'lv', 'Pakistan': 'pk', 'Portugal': 'pt', 'Russia': 'ru', 'Sweden': 'se', 'Peru': 'pe', 'Lithuania': 'lt', 'Italy': 'it', 'Iceland': 'is', 'Japan': 'jp', 'Kuwait': 'kw', 'South Korea': 'kr', 'India': 'in', 'Sri Lanka': 'lk', 'Thailand': 'th', 'Suriname': 'sr', 'United States': 'us', 'Taiwan': 'tw', 'Venezuela': 've', 'South Africa': 'za', 'Vietnam': 'vn', 'Turkey': 'tr'}
 regionsLoaded = []
 
-def getYaMarketData(progressBarId, regions):
+
+
+def getYaMarketData(progressBarId, regions, caps, currencyConverter: CurrencyConverter):
     CRUMB = "nQGWAqVg.Xy"
     #req = requests.get(f"https://query1.finance.yahoo.com/v1/finance/screener/instrument/equity/new?crumb={CRUMB}&lang=it-IT&region=IT&corsDomain=it.finance.yahoo.com", headers=requestHeader)
     #payload = {"requests":{"g0":{"resource":"StreamService","operation":"read","params":{"ui":{"editorial_featured_count":1,"image_quality_override":1,"link_out_allowed":1,"ntk_bypassA3c":1,"pubtime_maxage":-1,"storyline_count":2,"storyline_min":2,"thumbnail_size":100,"view":"sidekick","editorial_content_count":0,"finance_upsell_threshold":4},"category":"SIDEKICK:TOPSTORIES","forceJpg":1,"releasesParams":{"limit":20,"offset":0},"offnet":{"include_lcp":1,"use_preview":1},"useNCP":1,"ads":{"ad_polices":1,"count":25,"frequency":4,"generic_viewability":1,"partial_viewability":1,"pu":"finance.yahoo.com","se":4492794,"spaceid":1185835883,"start_index":2,"timeout":0,"type":"STRM,STRM_CONTENT","useHqImg":1,"useResizedImages":1},"batches":{"size":48,"timeout":500,"total":170},"blending_enabled":1,"enableAuthorBio":1,"max_exclude":10,"min_count":3,"service":{"specRetry":{"enabled":0}},"pageContext":{"pageType":"utility","subscribed":"0","tier":"0","enablePremium":"0","eventName":"","topicName":"","category":"","quoteType":"","calendarType":"","screenerType":"new","inTrial":"0","cryptoUser":"0","enableTrading":"0","hubName":""},"content_type":"screener","content_site":"finance","exclude_uuids":[]}}},"context":{"feature":"canvassOffnet,ccOnMute,disableCommentsMessage,debouncesearch100,deferDarla,disableMegaModalSa,ecmaModern,enable3pConsent,enableCCPAFooter,enableNewCCPAFooter,enableCMP,enableConsentData,enableEncryption,enableEVPlayer,enableFBRedirect,enableFreeFinRichSearch,enableGAMAds,enableGAMBrokerButtonEvent,enableGuceJs,enableGuceJsOverlay,enableNcpVideo,enablePortfolioBasicEolFlow,enablePrivacyUpdate,enableUpgradeLeafPage,enableVideoURL,enableYodleeErrorMsgCriOS,ncpPortfolioStream,ncpQspStream,ncpQspStreamV2,upgradeNCPQueries,ncpStream,ncpStreamIntl,ncpTopicStream,newContentAttribution,newLogo,notificationsServiceWorker,oathPlayer,relatedVideoFeatureOff,removeConversations,useNextGenHistory,videoNativePlaylist,enableComscoreUdm2,sunsetMotif2,enableUserPrefAPI,enableCustomSymbolsTotalGain,enableHeaderBidding,enablePortfolioHoldingsRedesign,enableOnlyBetaPortfoliosCreation,enablePortfolioHoldingsRedesignMweb,enableNCPChannel,enableSingleRail,enhanceAddToWL,article2_csn,enableStageAds,sponsoredAds,enableNativeBillboard,enableLiveDynamicData","bkt":"finance-IT-it-IT-def","crumb":{CRUMB},"device":"desktop","intl":"it","lang":"it-IT","partner":"none","prid":"6qqd7jhj5dvh6","region":"IT","site":"finance","tz":"Europe/Rome","ver":"0.10101010102.490","ecma":"modern"}}
@@ -79,13 +86,32 @@ def getYaMarketData(progressBarId, regions):
     data = []
     name=None
     rCount = 0
-    markets = {}
-    eel.setProgress(progressBarId, 0)
+    if(progressBarId):
+        eel.setProgress(progressBarId, 0)
+    
+    capsConditions = [{"operator":"LT","operands":["intradaymarketcap",2000000000]},
+                      {"operator":"BTWN","operands":["intradaymarketcap",2000000000,10000000000]},
+                      {"operator":"BTWN","operands":["intradaymarketcap",10000000000,100000000000]},
+                      {"operator":"GT","operands":["intradaymarketcap",100000000000]}]
+
+    filteredCapsConditions = []
+    for c in caps:
+        if(c!=-1):
+            filteredCapsConditions.append(capsConditions[c])
     for r in regions:
         for o in range(0, 10000, 250):
-            payload = {"size":250,"offset":o,"sortField":"dayvolume","sortType":"DESC","quoteType":"EQUITY","topOperator":"AND","query":{"operator":"AND","operands":[{"operator":"or","operands":[{"operator":"EQ","operands":["region", regionsNames[r]]}]},{"operator":"gt","operands":["avgdailyvol3m",10]}]},"userId":"","userIdType":"guid"}
-            req = requests.post(f"https://query2.finance.yahoo.com/v1/finance/screener?crumb={CRUMB}&lang=it-IT&region=IT&formatted=true&corsDomain=it.finance.yahoo.com", headers=requestHeader2, json=payload).json()
-            reqList = req["finance"]["result"][0]["quotes"]
+            reqList=[]
+            retryNum=10
+            for retry in range(retryNum):
+                try:
+                    payload = {"size":250,"offset":o,"sortField":"dayvolume","sortType":"DESC","quoteType":"EQUITY","topOperator":"AND","query":{"operator":"AND","operands":[{"operator":"or","operands":[{"operator":"EQ","operands":["region", regionsNames[r]]}]},{"operator":"or","operands":filteredCapsConditions},{"operator":"gt","operands":["avgdailyvol3m",10]},{"operator":"gt","operands":["percentchange",0]},{"operator":"gt","operands":["dayvolume",10]}]},"userId":"","userIdType":"guid"}
+                    req = requests.post(f"https://query2.finance.yahoo.com/v1/finance/screener?crumb={CRUMB}&lang=it-IT&region=IT&formatted=true&corsDomain=it.finance.yahoo.com", headers=requestHeader2, json=payload).json()
+                    reqList = req["finance"]["result"][0]["quotes"]
+                    break
+                except:
+                    if(retry==retryNum-1):
+                        raise ConnectionError
+                    continue
             if(len(reqList)==0):
                 break
             for d in reqList:
@@ -98,53 +124,127 @@ def getYaMarketData(progressBarId, regions):
                                 name = d["longName"]
                             except KeyError:
                                 name = d["symbol"]
-                        markets[d["fullExchangeName"]]=0
+
                         data.append({"symbol":d["symbol"],
                                     "name":name,
-                                    "region":r, 
+                                    "region":r,
                                     "valueDeltaPerc":round(d["regularMarketChangePercent"]["raw"], 3), 
                                     "volume":d["regularMarketVolume"]["raw"], 
                                     "volumeAvg":d["averageDailyVolume3Month"]["raw"], 
                                     "volumeDeltaPerc":round((d["regularMarketVolume"]["raw"]-d["averageDailyVolume3Month"]["raw"])*100/d["averageDailyVolume3Month"]["raw"]), 
                                     "marketState":d["marketState"], 
-                                    "volumePrice":round(d["regularMarketPreviousClose"]["raw"]*d["regularMarketVolume"]["raw"])} )
+                                    "volumePrice":round(d["regularMarketPreviousClose"]["raw"]*d["regularMarketVolume"]["raw"]*currencyConverter.getUsdConversion(d["currency"]))} )
+
                 except KeyError:
                     pass
             total = req["finance"]["result"][0]["total"]
-            eel.setProgress(progressBarId, (rCount*100)/len(regions) + o*(1/len(regions)*100)/total)
+            if(progressBarId):
+                eel.setProgress(progressBarId, (rCount*100)/len(regions) + o*(1/len(regions)*100)/total)
         rCount+=1
-    eel.setProgress(progressBarId, 100)
+    if(progressBarId):
+        eel.setProgress(progressBarId, 100)
     print(len(data))
-    print(markets.keys())
     return data
+
+
+class AlertListener(Thread):
+    def __init__(self,num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate, currencyConverter : CurrencyConverter):
+        Thread.__init__(self)
+        self.stopped = False
+        self.num=num
+        self.volumePerc=volumePerc
+        self.valuePerc=valuePerc
+        self.minVolume=minVolume
+        self.minVolumePrice=minVolumePrice
+        self.regions=regions
+        self.caps=caps
+        self.refreshRate=refreshRate
+        self.currencyConverter = currencyConverter
+        self.oldSymbols = {}
+
+
+    def run(self):
+        while(not self.stopped and not threadStop.stop):
+            try:
+                alerts = getYaMarketData(None, self.regions, self.caps, self.currencyConverter)
+                filteredAlerts = [d for d in alerts if d["volumeAvg"]>self.minVolume and 
+                                            d["volumeDeltaPerc"]>=self.volumePerc and 
+                                            d["valueDeltaPerc"]>=self.valuePerc and
+                                            d["volumePrice"]>=self.minVolumePrice]
+                
+                symbolsUpdated = [a["symbol"] for a in filteredAlerts]
+                notPresent = [a for a in self.oldSymbols if a not in  symbolsUpdated]
+                
+                for a in filteredAlerts:
+                    if(a["symbol"] in self.oldSymbols):
+                        a["time"] = self.oldSymbols[a["symbol"]]
+                        a["new"] = 0
+                    else:
+                        a["time"] = datetime.now().time().replace(microsecond=0)
+                        self.oldSymbols[a["symbol"]] = a["time"]
+                        a["new"] = 1
+                    a["deleted"] = 0
+
+                for np in notPresent:
+                    a = {"symbol":np, "time":self.oldSymbols[np], "deleted":1}
+                    filteredAlerts.insert(0, a)
+
+                orderObjectListBy(filteredAlerts, "time")
+
+                for a in filteredAlerts:
+                    a["time"] = str(a["time"])
+
+                eel.applyAlertListenerTable(filteredAlerts, self.num)
+            except ConnectionError:
+                print("listener connection error")
+
+
+            for t in range(self.refreshRate*60):
+                time.sleep(1)
+                if(threadStop.stop):
+                    break
+        
+
 
 
 class AlertChecker:
     
-    def __init__(self, titleList):
+    def __init__(self, titleList, currencyConverter : CurrencyConverter):
         self.titleList = titleList
         self.data = None
         self.alerts = []
         self.regions=[]
+        self.caps=[]
+        self.currencyConverter = currencyConverter
+        self.alertListeners = {}
 
     def getData(self, progressBarId):
         try:
-            self.data = getYaMarketData(progressBarId, self.regions)
+            self.data = getYaMarketData(progressBarId, self.regions, self.caps, self.currencyConverter)
 
         except ConnectionError:
             print("alert connection error")
 
 
 
-    def check(self, volumePerc, valuePerc, minVolume, minVolumePrice, regions, progressBarId):
+    def check(self, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, progressBarId, forceUpdateData = False):
         
-        if(self.data==None or regions!=self.regions):
+        if(self.data==None or regions!=self.regions or caps!=self.caps  or forceUpdateData):
             self.regions = regions
+            self.caps = caps
             self.getData(progressBarId)
         self.alerts = [d for d in self.data if d["volumeAvg"]>minVolume and 
                                                 d["volumeDeltaPerc"]>=volumePerc and 
                                                 d["valueDeltaPerc"]>=valuePerc and
                                                 d["volumePrice"]>=minVolumePrice]
         orderObjectListBy(self.alerts, "volumeDeltaPerc")
-            
-            
+
+    def addListener(self, num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate):
+        al = AlertListener(num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate, self.currencyConverter)
+        self.alertListeners[str(num)] = al
+        al.start()
+
+    def removeListener(self, num):
+        self.alertListeners[str(num)].stopped = True
+        del self.alertListeners[str(num)]
+
