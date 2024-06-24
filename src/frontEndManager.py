@@ -7,6 +7,7 @@ import numpy as np
 from marketAnalyzer import MarketMatrix
 from alert import AlertChecker
 from prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2
+from backTest import runBackTesting
 from threadStopper import threadStop
 
 eel.init("./src/web/")
@@ -180,3 +181,7 @@ def removeAlertListener(num):
     alertChecker.removeListener(num)
 
 
+@eel.expose
+def calculateBackTesting(title):
+    testsResults = runBackTesting(title, marketMatrix)
+    print(testsResults)
