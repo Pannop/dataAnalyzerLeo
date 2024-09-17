@@ -13,17 +13,20 @@ var alert_capMega;
 
 function runAlert(){
     openSimulationPanel();
+    eel.getRealtimeSuffixes()
     insertHtmlAlert();
     setTimeout(()=>{
         updateVariablesAlert();
         //updateAlert();
     },1);
-
+    
 }
 
 var regionsNames = ['Argentina', 'Australia', 'Austria', 'Belgium', 'Brazil', 'Canada', 'Chile', 'China', 'Czechia', 'Denmark', 'Egypt', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hong Kong SAR China', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kuwait', 'Latvia', 'Lithuania', 'Malaysia', 'Mexico', 'Netherlands', 'New Zealand', 'Norway', 'Pakistan', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Russia', 'Saudi Arabia', 'Singapore', 'South Africa', 'South Korea', 'Spain', 'Sri Lanka', 'Suriname', 'Sweden', 'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'United Kingdom', 'United States', 'Venezuela', 'Vietnam']
 var regionsNamesEurope = ['Austria', 'Belgium', 'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Iceland', 'Ireland', 'Italy', 'Latvia', 'Lithuania', 'Netherlands', 'Norway', 'Poland', 'Portugal', 'Spain', 'Sweden', 'Switzerland', 'United Kingdom'];
 var regionsNamesAsia = ['China', 'Hong Kong SAR China', 'India', 'Indonesia', 'Japan', 'Kuwait', 'Malaysia', 'Philippines', 'Qatar', 'Saudi Arabia', 'Singapore', 'South Korea', 'Sri Lanka', 'Thailand', 'Turkey', 'Vietnam'];
+var realtimeSuffixes = []
+
 
 function clickRegionAlert(region, forceCheck=false){
     if(region=="europe"){
@@ -96,6 +99,7 @@ function updateVariablesAlert(){
                 <label class="form-check-label" onclick="clickRegionAlert('${regionsNames[i+j]}')">
                 ${regionsNames[i+j]}
                 </label>
+                <div class="regionMenuStatus" id="alert_regionMenu_${regionsNames[i+j]}_status"></div>
             </div>`;
         }
 
@@ -134,6 +138,19 @@ function clickRegionsListAlert(){
     }
     else{
         alert_regionMenu.style.display = "block";
+        for(let reg in marketStatus){
+            let statusElem = document.getElementById(`alert_regionMenu_${reg}_status`);
+            let color = "";
+            if(marketStatus[reg]["open"]){
+                if(marketStatus[reg]["realtime"])
+                    color="#00edffe0";
+                else
+                    color="#00ff0acf";
+            }
+            else
+                color="#ff0000cf";
+            statusElem.style.backgroundColor = color;
+        }
     }
     titleRegionsAlertOpen=Math.abs(titleRegionsAlertOpen-1);
 }
@@ -376,3 +393,9 @@ function applyAlertListenerTable(alerts, num){
     });
     table.innerHTML=html;
 }
+
+eel.expose(setRealtimeSuffixes)
+function setRealtimeSuffixes(suffixes){
+    realtimeSuffixes = suffixes;
+}
+

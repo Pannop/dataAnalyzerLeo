@@ -148,7 +148,7 @@ def calculateHeston(data, simulations, futureDataNum):
     finalMean = []
     for i in range(futureDataNum):
         finalMean.append(df[i].mean())
-    return finalMean
+    return finalMean[1:]
 
 def calculateHurst():
     pass

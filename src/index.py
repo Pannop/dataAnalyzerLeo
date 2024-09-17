@@ -11,6 +11,7 @@ from marketAnalyzer import *
 import frontEndManager
 from alert import AlertChecker
 from currencyCoverter import CurrencyConverter
+from marketStatusChecker import MarketStatusChecker
 
 
 
@@ -27,15 +28,16 @@ fileIn = open("resources/marketListCode.txt", "r")
 marketList = fileIn.read().split("\n")
 fileIn.close()
 
-fileIn = open("resources/alertListCode.txt", "r")
-alertList = fileIn.read().split("\n")
-fileIn.close()
+
 
 
 mm = MarketMatrix(marketList, "FTSEMIB.MI", CACHE_FILE)
 cc= CurrencyConverter()
-ac = AlertChecker(alertList, cc)
+ac = AlertChecker(cc)
+msc = MarketStatusChecker(5*60)
+msc.start()
+
 
  
-frontEndManager.__init__(1200, 900, mm, ac)  
+frontEndManager.__init__(1200, 900, mm, ac, msc)  
 frontEndManager.start()

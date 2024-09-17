@@ -2,6 +2,7 @@
 from marketAnalyzer import MarketMatrix
 import math
 import prevision
+from collections import defaultdict
 
 KEY_MONTECARLO = "montecarlo"
 
@@ -9,10 +10,10 @@ KEYS_PREVISIONS = [KEY_MONTECARLO]
 
 testConfig = {        
     "types":["d", "wk", "mo"],
-    "hystoricalData":[10, 100, 1000, 10000],
-    "futureData":[1, 10, 100, 1000, 10000],
-    "simulations":[50, 500, 5000],
-    "tests":40,
+    "hystoricalData":[10, 100, 1000, 7000],
+    "futureData":[1, 10, 100, 1000, 5000],
+    "simulations":[1000, 5000],
+    "tests":10,
     "algorithms":[prevision.calculateMontecarloV2]
 }
 
@@ -22,30 +23,54 @@ def checkPrevision(data, previsionFunction,  hystoricalData, futureData, simulat
     if(remainingData<=0):
         return []
     tests = min(tests, remainingData)
-    step = remainingData/tests
+    step = int(remainingData/tests)
+    print(len(data), step, tests)
     errors = []
     for t in range(tests):
-        pivot = len(remainingData)-1 - futureData - t*step
+        pivot = len(data)-1 - futureData - t*step
         prev = previsionFunction(data[pivot-(hystoricalData-1):pivot+1], simulations, futureData)
-        lastValue = prev[-1]
-        realValue = data[pivot+futureData]["value"]
-        errorPerc = (lastValue-realValue)*100/realValue
+        prevDelta = prev[-1]-data[pivot]["value"]
+        realDelta = data[pivot+futureData]["value"]-data[pivot]["value"]
+        if(realDelta==0):
+            continue
+        errorPerc = round(prevDelta/realDelta, 2)
         errors.append(errorPerc)
+
+            
+        
     return errors
         
         
 
+class AutoCreatingDict(dict):
+    def __getitem__(self, key):
+        try:
+            return super().__getitem__(key)
+        except KeyError:
+            self[key] = AutoCreatingDict()
+            return self[key]
+            
+
+            
 
 def runBackTesting(title, marketMatrix:MarketMatrix):
-    data = {"d": marketMatrix.getMarketsData([title], 0, math.inf, "d", type),
-        "wk": marketMatrix.getMarketsData([title], 0, math.inf, "wk", type),
-        "mo": marketMatrix.getMarketsData([title], 0, math.inf, "mo", type)}
-    
+    data = {"d": marketMatrix.getMarketsData([title], "1980-01-01", "2040-01-01", "d", "close"),
+        "wk": marketMatrix.getMarketsData([title], "1980-01-01", "2040-01-01", "wk", "close"),
+        "mo": marketMatrix.getMarketsData([title], "1980-01-01", "2040-01-01", "mo", "close")}
+    testsResults = AutoCreatingDict()
+    testsResultsSummary = AutoCreatingDict()
+
     for a in testConfig["algorithms"]:
         for t in testConfig["types"]:
             for h in testConfig["hystoricalData"]:
                 for f in testConfig["futureData"]:
                     for s in testConfig["simulations"]:
                         if(a.__module__ == prevision.__name__):
-                            errors = checkPrevision(data[t], a, h, f, s, testConfig["tests"])
+                            print(a.__name__, t, h, f, s)
+                            errors = checkPrevision(data[t][title], a, h, f, s, testConfig["tests"])
+                            testsResultsSummary[a.__name__][t][str(h)][str(f)][str(s)] = ("N/D" if len(errors)==0 else round(sum(errors)/len(errors), 3))
                             errors += ["N/D"]*(testConfig["tests"]-len(errors))
+                            testsResults[a.__name__][t][str(h)][str(f)][str(s)] = errors
+    return testsResults, testsResultsSummary
+
+

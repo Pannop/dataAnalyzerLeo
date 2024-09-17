@@ -12,6 +12,10 @@ var correlationTable = document.getElementById("correlationTable");
 var correlationValidTitles = document.getElementById("correlationValidTitles");
 var correlationTriangular = document.getElementById("correlationTriangular");
 
+var marketStatus;
+
+var REALTIME_UPDATE_MILLIS = 5*60*1000
+
 var TAG_RATIO = "ratio";
 var TAG_SUM_PREC = "sumprec";
 var TAG_SCALED = "scaled";
@@ -64,10 +68,15 @@ function setComparisonList(index, marketList){
 
 eel.expose(setTitles);
 function setTitles(data) {
-    baseData = data;
-    setMarketList(baseData["indexName"], baseData["marketList"]);
-    setComparisonList(baseData["indexName"], baseData["marketList"]);
-    updateStatistics();
+    try{
+        baseData = data;
+        setMarketList(baseData["indexName"], baseData["marketList"]);
+        setComparisonList(baseData["indexName"], baseData["marketList"]);
+        updateStatistics();
+    }
+    catch(e){
+        console.error(e);
+    }
 }
 
 google.charts.load('current', { packages: ['corechart', 'line'] });
@@ -127,11 +136,16 @@ function setStats(){
 
 eel.expose(applyStats);
 function applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, elemsId){
-    document.getElementById(elemsId+"Correlation").innerHTML = correlation;
-    document.getElementById(elemsId+"WeightedCorrelation").innerHTML = weightedCorrelation;
-    document.getElementById(elemsId+"BetaDaily").innerHTML = betaDaily;
-    document.getElementById(elemsId+"BetaWeekly").innerHTML = betaWeekly;
-    document.getElementById(elemsId+"BetaMonthly").innerHTML = betaMonthly;
+    try{
+        document.getElementById(elemsId+"Correlation").innerHTML = correlation;
+        document.getElementById(elemsId+"WeightedCorrelation").innerHTML = weightedCorrelation;
+        document.getElementById(elemsId+"BetaDaily").innerHTML = betaDaily;
+        document.getElementById(elemsId+"BetaWeekly").innerHTML = betaWeekly;
+        document.getElementById(elemsId+"BetaMonthly").innerHTML = betaMonthly;    
+    }
+    catch(e){
+        console.error(e);
+    }
 }
 
 
@@ -208,6 +222,10 @@ function createStatsPages(){
                         <hr>
                         <div class="flex">
                             <button class="btn btn-outline-dark" onclick="runPrevision(['${title}']);">Run Prevision</button>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runBackTesting('${title}');">Run Back Testing</button>
                         </div>
                     </div>
                     <div id="market${title}ChartValues" class="chart"></div>
@@ -286,78 +304,82 @@ function stopDrawing(){
 eel.expose(applyChart);
 function applyChart(formattedData, elemId, dataChartCode){
     setTimeout(()=>{
-        if(chartDataTables[dataChartCode]==null)
-            return;
-        let dataTable = chartDataTables[dataChartCode]["table"];
-        let chartTitle = chartDataTables[dataChartCode]["title"];
-        let tags = chartDataTables[dataChartCode]["tags"];
-        let yAxis = chartDataTables[dataChartCode]["yAxis"];
-        let xAxis = chartDataTables[dataChartCode]["xAxis"];
-        let callbackPreTag = chartDataTables[dataChartCode]["callbackPreTag"];
-        let callbackAfterTag = chartDataTables[dataChartCode]["callbackAfterTag"];
-        
-        for(let i=0;i<formattedData.length;i++){
-            formattedData[i][0] = new Date(formattedData[i][0]*1000);
-        }
+        try{
+            if(chartDataTables[dataChartCode]==null)
+                return;
+            let dataTable = chartDataTables[dataChartCode]["table"];
+            let chartTitle = chartDataTables[dataChartCode]["title"];
+            let tags = chartDataTables[dataChartCode]["tags"];
+            let yAxis = chartDataTables[dataChartCode]["yAxis"];
+            let xAxis = chartDataTables[dataChartCode]["xAxis"];
+            let callbackPreTag = chartDataTables[dataChartCode]["callbackPreTag"];
+            let callbackAfterTag = chartDataTables[dataChartCode]["callbackAfterTag"];
+            
+            for(let i=0;i<formattedData.length;i++){
+                formattedData[i][0] = new Date(formattedData[i][0]*1000);
+            }
 
-        if(callbackPreTag){
-            formattedData = callbackPreTag(formattedData, dataChartCode);
-        }
-        tags.forEach((t)=>{
-            if(t == TAG_RATIO){
-                dataTable.removeColumns(1,2);
-                dataTable.addColumn('number', "ratio");
-                for(let i=0;i<formattedData.length;i++){
-                    formattedData[i][1] = (formattedData[i][1]/formattedData[i][2]);
-                    formattedData[i].pop(2);
-        
-                }
+            if(callbackPreTag){
+                formattedData = callbackPreTag(formattedData, dataChartCode);
             }
-            else if( t == TAG_SUM_PREC){
-                for(let i=1;i<formattedData.length;i++){
-                    for(let j=1;j<formattedData[0].length; j++){
-                        formattedData[i][j] += formattedData[i-1][j];
-                    }
-                }
-            }
-            else if(t == TAG_SCALED){
-                for(let j=2;j<formattedData[0].length; j++){
-                    let factorScale = formattedData[0][1]/formattedData[0][j];
+            tags.forEach((t)=>{
+                if(t == TAG_RATIO){
+                    dataTable.removeColumns(1,2);
+                    dataTable.addColumn('number', "ratio");
                     for(let i=0;i<formattedData.length;i++){
-                        formattedData[i][j] *= factorScale;
+                        formattedData[i][1] = (formattedData[i][1]/formattedData[i][2]);
+                        formattedData[i].pop(2);
+            
                     }
                 }
-            }
-            else if(t == TAG_SAME_START){
-                for(let j=2;j<formattedData[0].length; j++){
-                    let factorAdditional = formattedData[0][1]-formattedData[0][j];
-                    for(let i=0;i<formattedData.length;i++){
-                        formattedData[i][j] += factorAdditional;
+                else if( t == TAG_SUM_PREC){
+                    for(let i=1;i<formattedData.length;i++){
+                        for(let j=1;j<formattedData[0].length; j++){
+                            formattedData[i][j] += formattedData[i-1][j];
+                        }
                     }
                 }
+                else if(t == TAG_SCALED){
+                    for(let j=2;j<formattedData[0].length; j++){
+                        let factorScale = formattedData[0][1]/formattedData[0][j];
+                        for(let i=0;i<formattedData.length;i++){
+                            formattedData[i][j] *= factorScale;
+                        }
+                    }
+                }
+                else if(t == TAG_SAME_START){
+                    for(let j=2;j<formattedData[0].length; j++){
+                        let factorAdditional = formattedData[0][1]-formattedData[0][j];
+                        for(let i=0;i<formattedData.length;i++){
+                            formattedData[i][j] += factorAdditional;
+                        }
+                    }
+                }
+            });
+            if(callbackAfterTag){
+                formattedData = callbackAfterTag(formattedData, dataChartCode);
             }
-        });
-        if(callbackAfterTag){
-            formattedData = callbackAfterTag(formattedData, dataChartCode);
-        }
 
-    
-        dataTable.addRows(formattedData);
-    
-        let options = {
-            hAxis: {
-                title: xAxis
-            },
-            vAxis: {
-                title: yAxis
-            },
-            title: chartTitle
-        };
-    
-        let chart = new google.visualization.LineChart(document.getElementById(elemId));
-        chart.draw(dataTable, options);    
-    
-    },1);
+        
+            dataTable.addRows(formattedData);
+        
+            let options = {
+                hAxis: {
+                    title: xAxis
+                },
+                vAxis: {
+                    title: yAxis
+                },
+                title: chartTitle
+            };
+        
+            let chart = new google.visualization.LineChart(document.getElementById(elemId));
+            chart.draw(dataTable, options);    
+        }
+        catch(e){
+            console.error(e);
+        }
+    },10);
 }
 
 
@@ -449,3 +471,20 @@ eel.expose(setProgress);
 function setProgress(progressBarId, value){
     document.getElementById(progressBarId).style.width = `${value}%`;
 }
+
+eel.expose(setMarketStatus)
+function setMarketStatus(ms){
+    if(ms==null){
+        setTimeout(()=>{
+            eel.getMarketStatus();
+        }, 100)
+    }
+    else
+        marketStatus = ms;
+}
+
+
+eel.getMarketStatus();
+setInterval(()=>{
+    eel.getMarketStatus();
+}, REALTIME_UPDATE_MILLIS);

@@ -6,6 +6,7 @@ import os
 import numpy as np
 from marketAnalyzer import MarketMatrix
 from alert import AlertChecker
+from marketStatusChecker import MarketStatusChecker
 from prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2
 from backTest import runBackTesting
 from threadStopper import threadStop
@@ -15,15 +16,18 @@ eel.init("./src/web/")
 winSize = None
 marketMatrix = None
 alertChecker = None
+marketStatusChecker = None 
 
 
-def __init__(dimX, dimY, marketMatrixRef: MarketMatrix, alertCheckerRef: AlertChecker):
+def __init__(dimX, dimY, marketMatrixRef: MarketMatrix, alertCheckerRef: AlertChecker, marketStatusCheckerRef: MarketStatusChecker):
     global winSize
     winSize = [dimX, dimY]
     global marketMatrix
     marketMatrix = marketMatrixRef
     global alertChecker
     alertChecker = alertCheckerRef
+    global marketStatusChecker
+    marketStatusChecker = marketStatusCheckerRef
 
 def stopThreads(route, websockets):
     if not websockets:
@@ -180,8 +184,21 @@ def addAlertListener(num, volumePerc, valuePerc, minVolume, minVolumePrice, regi
 def removeAlertListener(num):
     alertChecker.removeListener(num)
 
+@eel.expose()
+def getRealtimeSuffixes():
+    eel.setRealtimeSuffixes(marketStatusChecker.getRealtimeSuffixes())
+
+@eel.expose
+def getMarketStatus():
+    if(marketStatusChecker.isReady()):
+        eel.setMarketStatus(marketStatusChecker.getMarketStatus())
+    else:
+        eel.setMarketStatus(None)
 
 @eel.expose
 def calculateBackTesting(title):
-    testsResults = runBackTesting(title, marketMatrix)
+    testsResults, testsResultsSummary = runBackTesting(title, marketMatrix)
+    with open("sum.json", "w") as sum, open("res.json", "w") as res:
+        sum.write(json.dumps(testsResultsSummary))
+        res.write(json.dumps(testsResults))
     print(testsResults)
