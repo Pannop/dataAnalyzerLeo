@@ -147,8 +147,8 @@ def calculateHeston(data, simulations, futureDataNum):
 
     finalMean = []
     for i in range(futureDataNum):
-        finalMean.append(df[i].mean())
-    return finalMean[1:]
+        finalMean.append(df[i+1].mean())
+    return finalMean
 
 def calculateHurst():
     pass
@@ -168,6 +168,27 @@ def calculateFourier(signal):
     plt.plot(frequency_axis, norm_amplitude)
     plt.show()
     return frequency_axis, norm_amplitude
+
+
+
+
+def calculateEma(data, periods):
+    df = pd.DataFrame(data)
+    result = []
+    for d in df.ewm(span=periods, adjust=False).mean().values:
+        result.append(d[0])
+    return result
+     
+
+def calculateMACD(data, period1, period2, periodSignal):
+    data = [d["value"] for d in data]
+    df1 = pd.DataFrame(calculateEma(data, period1))
+    df2 = pd.DataFrame(calculateEma(data, period2))
+    dfDiff = df1 - df2
+    dfSignal = pd.DataFrame(calculateEma([d[0] for d in dfDiff.values], periodSignal))
+    dfMACD = dfDiff - dfSignal
+    return [d[0] for d in dfMACD.values]
+
 """
 class Signal:
   def __init__(self, amplitude=1, frequency=10, duration=1, sampling_rate=100.0, phase=0):

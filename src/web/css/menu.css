@@ -1,0 +1,54 @@
+#menu_title{
+    font-family: Impact;
+    letter-spacing: 2px;
+}
+
+#menu_container{
+    background-color: rgb(245, 245, 245);
+    width: 90%;
+    height: 700px;
+    margin-top: 50px;
+    border-radius: 2%;
+}
+
+#menu_containerWatchlists{
+    min-height: 300px;
+    padding: 40px;
+}
+
+.menu_card{
+    border-radius: 8%;
+    background-color: rgb(255, 255, 255);
+    width: 150px;
+    height: 200px;
+    box-shadow: 3px 3px 10px rgb(66, 66, 66);
+    position: relative;
+}
+
+.menu_cardData{
+    padding: 10px;
+    
+}
+
+.menu_cardBottom{
+    position: absolute;
+    bottom: 0;
+    height: 40px;
+    width: 100%;
+    border-radius: 8%;
+}
+
+.menu_cardTitle{
+    width: 100%;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    
+}
+
+body{
+    background-color: #E1E4E8 !important;
+    display: flex;
+    justify-content: center;
+    align-items: self-start;
+}

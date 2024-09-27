@@ -7,9 +7,10 @@ import numpy as np
 from marketAnalyzer import MarketMatrix
 from alert import AlertChecker
 from marketStatusChecker import MarketStatusChecker
-from prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2
+from prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2, calculateEma, calculateMACD
 from backTest import runBackTesting
 from threadStopper import threadStop
+import matplotlib.pyplot as plt
 
 eel.init("./src/web/")
 
@@ -38,7 +39,8 @@ def start():
     marketMatrix.loadCache()
     marketMatrix.loadData()
     marketMatrix.saveCache()
-    eel.start("start.html", size=winSize, close_callback=stopThreads, shutdown_delay=10)
+    #eel.start("start.html", size=winSize, close_callback=stopThreads, shutdown_delay=10)
+    eel.start("start.html", size=winSize, close_callback=None, shutdown_delay=10)
 
 DATA_DIR = "./data/"
 def jsonToXlsx(data, excelFile="excelFile.xlsx"):
@@ -71,6 +73,8 @@ def formatData(markets, fromDate, toDate, interval, type, valueType, elemId, dat
         return []
     data = marketMatrix.getMarketsData(markets, fromDate, toDate, interval, type)
     formattedData = format(data, markets, valueType)
+
+    
     eel.applyChart(formattedData, elemId, dataChartCode) 
 
 
@@ -91,6 +95,7 @@ def calculateStats(markets, fromDate, toDate, interval, type, weightedCorrelatio
         
     def getBetaV2(data):
         return marketMatrix.calculateBetaV2([d["deltaPerc"] for d in data[markets[0]]], [d["deltaPerc"] for d in data[markets[1]]], correlation)
+
 
     betaDaily = getBetaV2(dataDaily)
     betaWeekly = getBetaV2(dataWeekly)
@@ -167,6 +172,21 @@ def calculatePrevision(market, fromDate, toDate, interval, type, simulations, da
         day.append(montecarloGBMData[i])
         day.append(hestonData[i])
         formattedPrevision.append(day)
+    
+    dfMacd = calculateMACD(data[market], 12, 26, 9)
+    plt.plot(pandas.DataFrame(dfMacd))
+    plt.show()
+
+    df = calculateEma([d["value"] for d in data[market]], 12)
+    df2 = calculateEma([d["value"] for d in data[market]], 26)
+    dfs = calculateEma([d[0] for d in (pandas.DataFrame(df) - pandas.DataFrame(df2)).values], 9)
+    plt.plot(pandas.DataFrame(df) - pandas.DataFrame(df2))
+    plt.plot(dfs)
+    plt.show()
+
+    
+
+        	
 
     eel.applyChartPrevision(formattedData, formattedPrevision)
 

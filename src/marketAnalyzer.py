@@ -12,7 +12,7 @@ import requestHeaders
 AV_KEY = "NPRZ3R6XPBJWSA26"
 
 
-
+"""
 def getUSMarketData(func, symbol, additional):
     req = requests.get(f'https://www.alphavantage.co/query?function={func}&symbol={symbol}&apikey={AV_KEY}&{additional}')
     return req.json()
@@ -28,7 +28,13 @@ def getBIMarketData(symbol):
         mic = response[0]["mic"]
     req = requests.get(f"https://live.euronext.com/intraday_chart/getChartData/{isin}-{mic}/max")
     return req.json()
-
+def calculateBIDelta(data, fromYear=0, dayStep=1):
+    deltas = []
+    for i in range(dayStep, len(data), dayStep):
+        if(int(data[i]["time"][:4])>=fromYear):
+            deltas.append({"time":data[i]["time"], "deltaPerc":round((data[i]["price"]-data[i-dayStep]["price"])/data[i-dayStep]["price"], 7),"delta":(data[i]["price"]-data[i-dayStep]["price"]), "value":data[i]["price"]})
+    return deltas
+"""
 
 def getYaMarketData(symbol, lastDate, interval="1d", retryCount = 0):
     t = str(time.time()).split(".")[0]
@@ -42,35 +48,30 @@ def getYaMarketData(symbol, lastDate, interval="1d", retryCount = 0):
         return getYaMarketData(symbol, lastDate, interval, retryCount+1)
     return req.json()
 
-def calculateBIDelta(data, fromYear=0, dayStep=1):
-    deltas = []
-    for i in range(dayStep, len(data), dayStep):
-        if(int(data[i]["time"][:4])>=fromYear):
-            deltas.append({"time":data[i]["time"], "deltaPerc":round((data[i]["price"]-data[i-dayStep]["price"])/data[i-dayStep]["price"], 7),"delta":(data[i]["price"]-data[i-dayStep]["price"]), "value":data[i]["price"]})
-    return deltas
+
 
 
 def getDeltas(x, y):
-        deltas = []
-        dayStep=1
-        for i in range(1, len(x)):
-            if(x[i] and y[i] and x[i-dayStep] and y[i-dayStep]):
-                deltas.append({"time":str(datetime.date.fromtimestamp(x[i])), "timestamp":x[i], "deltaPerc":round((y[i]-y[i-dayStep])/y[i-dayStep], 7),"delta":(y[i]-y[i-dayStep]),"log": np.log(abs(y[i]/y[i-dayStep])), "value":y[i]})
-      
-                #time.sleep(0.1)
+    deltas = []
+    dayStep=1
+    for i in range(1, len(x)):
+        if(x[i] and y[i] and x[i-dayStep] and y[i-dayStep]):
+            deltas.append({"time":str(datetime.date.fromtimestamp(x[i])), "timestamp":x[i], "deltaPerc":round((y[i]-y[i-dayStep])/y[i-dayStep], 7),"delta":(y[i]-y[i-dayStep]),"log": np.log(abs(y[i]/y[i-dayStep])), "value":y[i]})
+    
+            #time.sleep(0.1)
 
-        return deltas
+    return deltas
 
 def calculateYaDelta(data):
     
     x=data["chart"]["result"][0]["timestamp"]
 
     yAdj=data["chart"]["result"][0]["indicators"]["adjclose"][0]["adjclose"]
-    yNor=data["chart"]["result"][0]["indicators"]["quote"][0]
-    
+    yNor=data["chart"]["result"][0]["indicators"]["quote"][0]    
     return {"open":getDeltas(x, yNor["open"]),
             "close":getDeltas(x, yNor["close"]),
-            "adjclose":getDeltas(x, yAdj)}
+            "adjclose":getDeltas(x, yAdj),
+            "volime":getDeltas(x, yNor["volume"])}
     
 
 
@@ -129,7 +130,6 @@ class MarketMatrix:
         if(cache):
             for x in newData:
                 newData[x] = cache[x]+newData[x]
-            pass
         d[interval] = newData
 
         
@@ -210,7 +210,6 @@ class MarketMatrix:
             return "N/D"
 
 
-
     def calculateCorrelation(self, data0, data1):
         try:
             av0 = sum(data0)/len(data0)
@@ -236,7 +235,6 @@ class MarketMatrix:
         except:
             return "N/D"
 
-    
     def calculateIndexBetas(self):
         marketNum = len(self.marketList)
         for m0 in range(marketNum):
