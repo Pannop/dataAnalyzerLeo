@@ -9,9 +9,9 @@ import math
 import matplotlib as mp
 from marketAnalyzer import *
 import frontEndManager
-from alert import AlertChecker
-from currencyCoverter import CurrencyConverter
-from marketStatusChecker import MarketStatusChecker
+from utils.alert import AlertChecker
+from secondaries.currencyCoverter import CurrencyConverter
+from utils.marketStatusChecker import MarketStatusChecker
 
 
 
@@ -34,7 +34,7 @@ fileIn.close()
 mm = MarketMatrix(marketList, "FTSEMIB.MI", CACHE_FILE)
 cc= CurrencyConverter()
 ac = AlertChecker(cc)
-msc = MarketStatusChecker(5*60)
+msc = MarketStatusChecker(30*60)
 msc.start()
 
 

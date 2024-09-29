@@ -1,6 +1,8 @@
 var simulationPanel = document.getElementById("simulationPanel");
 var simulationContent = document.getElementById("simulationContent");
 var marketListChecks = document.getElementById("marketListChecks");
+var marketListCheck_interval = document.getElementById("marketListCheck_interval");
+var marketListCheck_type = document.getElementById("marketListCheck_type");
 var marketListCheck_from = document.getElementById("marketListCheck_from");
 var marketListCheck_to = document.getElementById("marketListCheck_to");
 var marketListCheck_sections = document.getElementById("marketListCheck_sections");
@@ -12,6 +14,7 @@ var correlationTable = document.getElementById("correlationTable");
 var correlationValidTitles = document.getElementById("correlationValidTitles");
 var correlationTriangular = document.getElementById("correlationTriangular");
 
+
 var marketStatus;
 
 var REALTIME_UPDATE_MILLIS = 5*60*1000
@@ -20,6 +23,7 @@ var TAG_RATIO = "ratio";
 var TAG_SUM_PREC = "sumprec";
 var TAG_SCALED = "scaled";
 var TAG_SAME_START = "samestart";
+var TAG_AVERAGE_LINE = "averageline";
 
 var baseData = null;
 
@@ -107,11 +111,13 @@ function marketListSetAll(checked) {
 
 
 function getIntervalValue(){
-    return document.querySelector('input[name="marketListCheck_radioInterval"]:checked').value;
+    //return document.querySelector('input[name="marketListCheck_radioInterval"]:checked').value;
+    return marketListCheck_interval.value;
 }
 
 function getTypeValue(){
-    return document.querySelector('input[name="marketListCheck_radioType"]:checked').value;
+    //return document.querySelector('input[name="marketListCheck_radioType"]:checked').value;
+    return marketListCheck_type.value;
 }
 
 
@@ -230,6 +236,8 @@ function createStatsPages(){
                     </div>
                     <div id="market${title}ChartValues" class="chart"></div>
                 </div>
+                <div id="market${title}ChartDelta" class="chart"></div>
+                <div id="market${title}ChartAverageLine" class="chart"></div>
                 <div id="market${title}ChartDeltaValues" class="chart"></div>
             </div>
         </div>
@@ -265,6 +273,8 @@ function addChartDataTable(columns, title, tags=null, yAxis="price", xAxis="time
 
 function drawTitleCharts(title){
     eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartValues`, addChartDataTable([title], "prices"));
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDelta`, addChartDataTable([title], "percentage trend", [TAG_SUM_PREC], "percentage"));
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartAverageLine`, addChartDataTable([title], "average line", [TAG_AVERAGE_LINE], "value"));
     eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDeltaValues`, addChartDataTable([title], "delta values", [], "percentage"));
 }
 
@@ -287,6 +297,7 @@ function drawCharts(){
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "log", "comparisonChartLog", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "log trend", [TAG_SUM_PREC], "log"));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "same start", [TAG_SAME_START]));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaValues", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta values", [], "percentage"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartAverageLine", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "average line", [TAG_AVERAGE_LINE], "value"));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "ratio", [TAG_RATIO], "value"));
         eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta ratio", [TAG_RATIO], "value"));
 
@@ -355,6 +366,22 @@ function applyChart(formattedData, elemId, dataChartCode){
                         }
                     }
                 }
+                else if(t == TAG_AVERAGE_LINE){
+                    dataTable.addColumn('number', "average")
+                    let cnt=0;
+                    let sum=0;
+                    for(let j = 1; j < formattedData[0].length;j++){
+                        for(let i=0; i < formattedData.length; i++){
+                            cnt++;
+                            sum+=formattedData[i][j];
+                        }
+                    }
+                    let avg = sum/cnt;
+                    for(let i=0; i < formattedData.length; i++){
+                        formattedData[i].push(avg);
+                    }
+                }
+
             });
             if(callbackAfterTag){
                 formattedData = callbackAfterTag(formattedData, dataChartCode);

@@ -4,10 +4,10 @@ import time
 import requests
 import re
 from datetime import datetime
-from currencyCoverter import CurrencyConverter
+from secondaries.currencyCoverter import CurrencyConverter
 from threading import Thread
-from threadStopper import threadStop
-import requestHeaders
+from secondaries.threadStopper import threadStop
+from secondaries import requestHeaders
 
 
 

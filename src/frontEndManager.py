@@ -5,11 +5,11 @@ import pandas
 import os
 import numpy as np
 from marketAnalyzer import MarketMatrix
-from alert import AlertChecker
-from marketStatusChecker import MarketStatusChecker
-from prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2, calculateEma, calculateMACD
-from backTest import runBackTesting
-from threadStopper import threadStop
+from utils.alert import AlertChecker
+from utils.marketStatusChecker import MarketStatusChecker
+from utils.prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2, calculateEma, calculateMACD
+from utils.backTest import runBackTesting
+from secondaries.threadStopper import threadStop
 import matplotlib.pyplot as plt
 
 eel.init("./src/web/")

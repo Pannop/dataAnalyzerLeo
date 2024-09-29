@@ -1,5 +1,5 @@
 import requests
-import requestHeaders
+from secondaries import requestHeaders
 
 currenciesNames = ['ARS', 'USD', 'AUD', 'EUR', 'RON', 'BRL', 'CAD', 'CLP', 'CNY', 'HKD', 'CZK', 'DKK', 'HUF', 'ISK', 'INR', 'IDR', 'ILA', 'JPY', 'KWF', 'MYR', 'MXN', 'NZD', 'NOK', 'PLN', 'QAR', 'SAR', 'SGD', 'ZAc', 'KRW', 'SEK', 'CHF', 'TWD', 'THB', 'TRY', 'GBp', 'ILS']
 

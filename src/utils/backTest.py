@@ -1,7 +1,7 @@
 
 from marketAnalyzer import MarketMatrix
 import math
-import prevision
+from utils import prevision
 from collections import defaultdict
 
 KEY_MONTECARLO = "montecarlo"

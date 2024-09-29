@@ -28,9 +28,15 @@
         <div style="min-width: 300px;">
             <button class="btn btn-outline-dark mt-3 ml-4" onclick="runAlert();">Check Alerts</button>
         </div>
-        <div>
-            <label>data type:</label>
-            <div class="form-check ml-4">
+        <div class="mr-3">
+            <label style="display: block;">data type:</label>
+            <select id="marketListCheck_type" class="form-select" onchange="updateStatistics();">
+                <option value="open">open</option>
+                <option value="close">close</option>
+                <option value="adjclose">adjclose</option>
+                <option value="volume">volume</option>
+            </select>
+            <!--<div class="form-check ml-4">
                 <input value="open" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType" checked>
                 <label class="form-check-label">
                     open
@@ -47,11 +53,16 @@
                 <label class="form-check-label" >
                     adjclose
                 </label>
-            </div>
+            </div>-->
         </div>
-        <div>
-            <label>interval:</label>
-            <div class="form-check ml-4">
+        <div class="ml-4 mr-4">
+            <label style="display: block;">interval:</label>
+            <select id="marketListCheck_interval" class="form-select" onchange="updateStatistics();">
+                <option value="d">daily</option>
+                <option value="wk">weekly</option>
+                <option value="mo">monthly</option>
+            </select>
+            <!--<div class="form-check ml-4">
                 <input value="d" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval" checked>
                 <label class="form-check-label">
                     daily
@@ -68,7 +79,7 @@
                 <label class="form-check-label" >
                     monthly
                 </label>
-            </div>
+            </div>-->
         </div>
         
         <div class="ml-4">
@@ -79,7 +90,7 @@
             <label>To:</label>
             <input type="date" id="marketListCheck_to" onchange="updateStatistics();" value="2025-01-01" min="1900-01-01" />    
         </div>
-        <div>
+        <div class="ml-4">
             <label>Correlation Sections:</label>
             <div class="input-group mb-1">
                 <input style="height: 30px;" value="4" type="number" class="form-control" id="marketListCheck_sections" onchange="updateStatistics();">
@@ -141,6 +152,7 @@
             <div id="comparisonChartLog" class="chart"></div>
             <div id="comparisonChartDeltaValues" class="chart"></div>
             <div id="comparisonChartRatio" class="chart"></div>
+            <div id="comparisonChartAverageLine" class="chart"></div>
             <div id="comparisonChartDeltaRatio" class="chart"></div>
         </div>
         
