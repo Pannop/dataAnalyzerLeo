@@ -1,43 +1,20 @@
-import datetime
-import os
-import requests
-import pandas
-import json
-import numpy as np
-import time
-import math
-import matplotlib as mp
 from marketAnalyzer import *
 import frontEndManager
-from utils.alert import AlertChecker
 from secondaries.currencyCoverter import CurrencyConverter
 from utils.marketStatusChecker import MarketStatusChecker
+from utils.dataBase import DataBase
+
+CACHE_FILE="./resources/cache.json"
+CONFIGURATION_FILE="./resources/config.json"
 
 
-
-#jsonToXlsx(getBIMarketData("DE000VU32806"))
-#jsonToXlsx(calculateDelta(getBIMarketData("DE000VU32806")), "jsonDeltaFile.json", "excelDeltaFile.xlsx")
-#print(getUSMarketData("TIME_SERIES_DAILY", "IBM", "outputsize=full"))
-    
-CACHE_FILE="./cache"
-
-
-
-
-fileIn = open("resources/marketListCode.txt", "r")
-marketList = fileIn.read().split("\n")
-fileIn.close()
-
-
-
-
-mm = MarketMatrix(marketList, "FTSEMIB.MI", CACHE_FILE)
 cc= CurrencyConverter()
-ac = AlertChecker(cc)
+db = DataBase(CACHE_FILE, CONFIGURATION_FILE, cc)
+db.start()
 msc = MarketStatusChecker(30*60)
 msc.start()
 
 
- 
-frontEndManager.__init__(1200, 900, mm, ac, msc)  
+  
+frontEndManager.__init__(1200, 900, db, msc)  
 frontEndManager.start()

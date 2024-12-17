@@ -10,11 +10,19 @@
     <link rel="stylesheet" href="css/start.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/alert.css">
-    <link rel="stylesheet" href="bootstrap-4.0.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap-4.0.0/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 
 <body>
+    <div id="topRightMenu">
+        <button id="topRightMenu_alert" class="btn btn-outline-dark" onclick="openMenu();">
+            <i class="bi bi-bell-fill"></i>
+            <div id="topRightMenu_alertNumber">3</div>
+        </button>
+        <button id="" class="btn btn-outline-dark" onclick="openMenu();">Back To Menu</button>
+    </div>
     <div class="topContainer">
         <div>
             <div id="marketListChecks"></div>
@@ -25,86 +33,54 @@
         <div id="marketChart" class="chart"></div>
     </div>
     <div class="bottomContainer">
-        <div style="min-width: 300px;">
-            <button class="btn btn-outline-dark mt-3 ml-4" onclick="runAlert();">Check Alerts</button>
+        <div style="min-width: 200px;">
+            <button class="btn btn-outline-dark mt-3 ml-4" onclick="">Check Alerts</button>
+            <br> 
+            <button class="btn btn-outline-dark mt-3 ml-4" onclick="runIndicator([], indicator_volumePriceFilter)">Run VPF</button>
+            <br>
+            <button class="btn btn-outline-dark mt-3 ml-4" onclick="runAlert([], alert_volumePriceFilter)">VPF Alerts</button>
         </div>
         <div class="mr-3">
             <label style="display: block;">data type:</label>
-            <select id="marketListCheck_type" class="form-select" onchange="updateStatistics();">
+            <select width="110px" id="marketListCheck_type" class="form-select" onchange="updateStatistics();">
                 <option value="open">open</option>
                 <option value="close">close</option>
                 <option value="adjclose">adjclose</option>
                 <option value="volume">volume</option>
             </select>
-            <!--<div class="form-check ml-4">
-                <input value="open" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType" checked>
-                <label class="form-check-label">
-                    open
-                </label>
-            </div>
-            <div class="form-check ml-4">
-                <input value="close" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType">
-                <label class="form-check-label" >
-                    close
-                </label>
-            </div>
-            <div class="form-check ml-4">
-                <input value="adjclose" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioType">
-                <label class="form-check-label" >
-                    adjclose
-                </label>
-            </div>-->
         </div>
         <div class="ml-4 mr-4">
             <label style="display: block;">interval:</label>
-            <select id="marketListCheck_interval" class="form-select" onchange="updateStatistics();">
+            <select width="110px" id="marketListCheck_interval" class="form-select" onchange="updateStatistics();">
                 <option value="d">daily</option>
                 <option value="wk">weekly</option>
                 <option value="mo">monthly</option>
             </select>
-            <!--<div class="form-check ml-4">
-                <input value="d" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval" checked>
-                <label class="form-check-label">
-                    daily
-                </label>
-            </div>
-            <div class="form-check ml-4">
-                <input value="wk" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval">
-                <label class="form-check-label" >
-                    weekly
-                </label>
-            </div>
-            <div class="form-check ml-4">
-                <input value="mo" class="form-check-input" onchange="updateStatistics();" type="radio" name="marketListCheck_radioInterval">
-                <label class="form-check-label" >
-                    monthly
-                </label>
-            </div>-->
         </div>
         
         <div class="ml-4">
             <label>From:</label>
-            <input type="date" id="marketListCheck_from" onchange="updateStatistics();" value="2019-01-01" min="1900-01-01"/>    
+            <input type="date" class="form-control" id="marketListCheck_from" onchange="updateStatistics();" value="2019-01-01" min="1900-01-01"/>    
         </div>
         <div class="ml-4">
             <label>To:</label>
-            <input type="date" id="marketListCheck_to" onchange="updateStatistics();" value="2025-01-01" min="1900-01-01" />    
+            <input type="date" class="form-control" id="marketListCheck_to" onchange="updateStatistics();" value="2025-01-01" min="1900-01-01" />    
         </div>
         <div class="ml-4">
             <label>Correlation Sections:</label>
             <div class="input-group mb-1">
-                <input style="height: 30px;" value="4" type="number" class="form-control" id="marketListCheck_sections" onchange="updateStatistics();">
+                <input value="4" type="number" class="form-control" id="marketListCheck_sections" onchange="updateStatistics();">
             </div>
         </div>
     </div>
     <div class="statsPage">
-        <div>
+        <div style="display: flex; align-items: center;">
             <h3 class="fl">Comparison</h3>
             <div class="fl ml-3">
-                <div class="fl">
+                <div class="fl flex">
                     <select id="comparisonTitle1" class="form-select" style="height: 33px" onchange="updateStatistics();" >
                     </select>
-                    <label>over</label>
+                    <label class="mr-3 ml-3">over</label>
                     <select id="comparisonTitle2" class="form-select" style="height: 33px" onchange="updateStatistics();">
                     </select>
                 </div>
@@ -141,7 +117,7 @@
                     </div>
                     <hr>   
                     <div class="flex">
-                        <button class="btn btn-outline-dark" onclick="runSubdivision([comparisonTitle1.value, comparisonTitle2.value]);">Run Subdivision</button>
+                        <button class="btn btn-outline-dark" onclick="runIndicator([comparisonTitle1.value, comparisonTitle2.value], indicator_subdivision);">Run Subdivision</button>
                     </div>
                 </div>
                 <div class="chartContainer">
@@ -192,6 +168,11 @@
                     <label class="form-check-label">triangular matrix</label>
                   </div>
                 <hr>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="correlationExport" >
+                    <label class="form-check-label">export excel</label>
+                  </div>
+                <hr>
                 <div class="flex">
                     <button class="btn btn-outline-dark" onclick="runCorrelationTable();">Create Table</button>
                 </div>
@@ -211,10 +192,20 @@
         <div id="simulationContent"></div>
     </div>
 
+    <script src="script/chart.js"></script>
     <script src="script/start.js"></script>
-    <script src="script/subdivision.js"></script>
-    <script src="script/prevision.js"></script>
-    <script src="script/alert.js"></script>
+    <script src="script/indicators/indicators.js"></script>
+    <script src="script/indicators/subdivision.js"></script>
+    <script src="script/indicators/prevision.js"></script>
+    <script src="script/indicators/rsi.js"></script>
+    <script src="script/indicators/macd.js"></script>
+    <script src="script/indicators/obv.js"></script>
+    <script src="script/indicators/volumePriceFilter.js"></script>
+    <script src="script/alerts/alerts.js"></script>
+    <script src="script/alerts/bubble.js"></script>
+    <script src="script/alerts/iceberg.js"></script>
+    <script src="script/alerts/macdObv.js"></script>
+    <script src="script/alerts/volumePriceFilter.js"></script>
     <script src="script/backTesting.js"></script>
 </body>
 </html>

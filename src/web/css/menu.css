@@ -6,36 +6,77 @@
 #menu_container{
     background-color: rgb(245, 245, 245);
     width: 90%;
-    height: 700px;
+    min-height: 700px;
     margin-top: 50px;
     border-radius: 2%;
 }
 
-#menu_containerWatchlists{
-    min-height: 300px;
-    padding: 40px;
+#menu_containerWatchlists, #menu_containerPortfolios{
+    min-height: 230px;
+    padding: 0 40px;
 }
 
 .menu_card{
+    float: left;
+    margin:20px;
     border-radius: 8%;
     background-color: rgb(255, 255, 255);
     width: 150px;
     height: 200px;
-    box-shadow: 3px 3px 10px rgb(66, 66, 66);
+    box-shadow: 3px 3px 4px rgb(66, 66, 66);
     position: relative;
 }
 
-.menu_cardData{
+.menu_cardHover{
+    opacity: 0;
+    position: absolute;
+    z-index: 10;
+    top:0;
+    width: 100%;
+    height: 93%;
+    background-color: #1a1a1af4;
+    border-radius: 3px;
+    left:0;
+    color: whitesmoke;
     padding: 10px;
-    
+    transition:0.3s
 }
 
+.menu_cardHover:hover{
+    opacity: 1 !important;
+    transition:0.3s
+}
+
+.menu_cardHoverButtons{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.menu_cardHover button{
+    color:whitesmoke !important;
+}
+
+.menu_cardHover p{
+    margin-bottom: 2px;
+}
+
+.menu_cardData{
+    padding-top: 0 !important;
+    padding: 10px;
+    position: relative;
+}
+
+.menu_cardChart{
+    min-height: 120px;
+}
 .menu_cardBottom{
     position: absolute;
     bottom: 0;
     height: 40px;
     width: 100%;
-    border-radius: 8%;
+    border-radius: 10px !important;
+    font-weight: bold !important;
 }
 
 .menu_cardTitle{
@@ -43,7 +84,8 @@
     font-weight: bold;
     text-align: center;
     padding: 10px;
-    
+    padding-bottom: 5px !important;
+    margin: 0;
 }
 
 body{

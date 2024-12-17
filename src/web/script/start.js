@@ -1,5 +1,3 @@
-var simulationPanel = document.getElementById("simulationPanel");
-var simulationContent = document.getElementById("simulationContent");
 var marketListChecks = document.getElementById("marketListChecks");
 var marketListCheck_interval = document.getElementById("marketListCheck_interval");
 var marketListCheck_type = document.getElementById("marketListCheck_type");
@@ -13,6 +11,7 @@ var comparisonRatio = document.getElementById("comparisonRatio");
 var correlationTable = document.getElementById("correlationTable");
 var correlationValidTitles = document.getElementById("correlationValidTitles");
 var correlationTriangular = document.getElementById("correlationTriangular");
+var correlationExport = document.getElementById("correlationExport");
 
 
 var marketStatus;
@@ -37,7 +36,7 @@ function setSize(width, height) {
 }
 
 
-function setMarketList(index, marketList) {
+function setMarketList(marketList) {
     addMarketCheckBox = (name) => {
         return `
         <div class="form-check">
@@ -48,21 +47,21 @@ function setMarketList(index, marketList) {
         </div>
         `
     }
-    str = addMarketCheckBox(index);
+    str = "";
     for (let i = 0; i < marketList.length; i++) {
         str += addMarketCheckBox(marketList[i]);
     }
     marketListChecks.innerHTML = str;
-    document.getElementById(`marketListCheck_${index}`).checked = true;
+    document.getElementById(`marketListCheck_${marketList[0]}`).checked = true;
 }
 
-function setComparisonList(index, marketList){
+function setComparisonList(marketList){
     addOption = (name) => {
         return `
         <option value="${name}">${name}</option>
         `
     }
-    str = addOption(index);
+    str = "";
     for (let i = 0; i < marketList.length; i++) {
         str += addOption(marketList[i]);
     }
@@ -74,8 +73,8 @@ eel.expose(setTitles);
 function setTitles(data) {
     try{
         baseData = data;
-        setMarketList(baseData["indexName"], baseData["marketList"]);
-        setComparisonList(baseData["indexName"], baseData["marketList"]);
+        setMarketList(baseData["marketList"]);
+        setComparisonList(baseData["marketList"]);
         updateStatistics();
     }
     catch(e){
@@ -83,12 +82,17 @@ function setTitles(data) {
     }
 }
 
-google.charts.load('current', { packages: ['corechart', 'line'] });
-//google.charts.setOnLoadCallback(drawCharts);
 
 
-eel.setDefaultSize();
-eel.loadTitles();
+function startApp(){
+    eel.setDefaultSize();
+    eel.loadTitles();
+}
+
+
+loadGoogleCharts(()=>{startApp();});
+
+
 
 
 function getSelectedMarkets() {
@@ -111,12 +115,10 @@ function marketListSetAll(checked) {
 
 
 function getIntervalValue(){
-    //return document.querySelector('input[name="marketListCheck_radioInterval"]:checked').value;
     return marketListCheck_interval.value;
 }
 
 function getTypeValue(){
-    //return document.querySelector('input[name="marketListCheck_radioType"]:checked').value;
     return marketListCheck_type.value;
 }
 
@@ -127,11 +129,6 @@ function updateStatistics(){
     setStats();
 }
 
-function removeCharts(){
-    document.querySelectorAll(".chart").forEach((c)=>{
-        c.innerHTML="";
-    })
-}
 
 function setStats(){
     eel.calculateStats([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), parseInt(marketListCheck_sections.value), "comparison"); 
@@ -192,7 +189,7 @@ function createStatsPages(){
             
             <div class="statsPageContent" id="statsPageContent${title}" style="display:none">
                 <div class="flex "> 
-                    <div class="statsPageDataList">
+                    <div class="statsPageDataListScrollable">
                         <div class="flex">
                             <div class="bd">Correlation</div>
                             <div style="color: rgb(49, 49, 49);" id="market${title}Correlation">1.3</div>
@@ -219,25 +216,52 @@ function createStatsPages(){
                         </div>
                         <hr>
                         <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runBackTesting('${title}');">Run Back Testing</button>
+                        </div>
+                        <hr>
+                            <div class="bd">Indicators</div>
+                        <hr>
+                        <div class="flex">
                             <button class="btn btn-outline-dark" onclick="marketExportExcel('${title}')">Export to Excel</button>
                         </div>
                         <hr>
                         <div class="flex">
-                            <button class="btn btn-outline-dark" onclick="runSubdivision(['${title}']);">Run Subdivision</button>
+                            <button class="btn btn-outline-dark" onclick="runIndicator(['${title}'], indicator_subdivision);">Run Subdivision</button>
                         </div>
                         <hr>
                         <div class="flex">
-                            <button class="btn btn-outline-dark" onclick="runPrevision(['${title}']);">Run Prevision</button>
+                            <button class="btn btn-outline-dark" onclick="runIndicator(['${title}'], indicator_prevision);">Run Prevision</button>
                         </div>
                         <hr>
                         <div class="flex">
-                            <button class="btn btn-outline-dark" onclick="runBackTesting('${title}');">Run Back Testing</button>
+                            <button class="btn btn-outline-dark" onclick="runIndicator(['${title}'], indicator_rsi);">Run RSI</button>
+                        </div>
+                        <hr>                        
+                        <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runIndicator(['${title}'], indicator_obv);">Run OBV</button>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runIndicator(['${title}'], indicator_macd);">Run MACD</button>
+                        </div>
+                        <hr>
+                            <div class="bd">Alerts</div>
+                        <hr>
+                        <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runAlert(['${title}'], alert_iceberg);">Run Iceberg</button>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runAlert(['${title}'], alert_bubble);">Run Bubble</button>
+                        </div>
+                        <hr>
+                        <div class="flex">
+                            <button class="btn btn-outline-dark" onclick="runAlert(['${title}'], alert_macdObv);">Run MACD-OBV</button>
                         </div>
                     </div>
                     <div id="market${title}ChartValues" class="chart"></div>
                 </div>
                 <div id="market${title}ChartDelta" class="chart"></div>
-                <div id="market${title}ChartAverageLine" class="chart"></div>
                 <div id="market${title}ChartDeltaValues" class="chart"></div>
             </div>
         </div>
@@ -251,31 +275,13 @@ function marketExportExcel(titles){
 }
 
 
-var chartCodeCounter = 0;
-var chartDataTables = {}
-function addChartDataTable(columns, title, tags=null, yAxis="price", xAxis="time", callbackPreTag=null, callbackAfterTag=null){
-    chartDataTables[chartCodeCounter.toString()] = {};
-    obj = chartDataTables[chartCodeCounter.toString()]; 
-    obj["table"] =  new google.visualization.DataTable();
-    obj["table"].addColumn('date', 'x');
-    columns.forEach(element => {
-        obj["table"].addColumn('number', element);
-    });
-    obj["title"] = title;
-    obj["tags"] = (tags==null?[]:tags);
-    obj["yAxis"] = yAxis;
-    obj["xAxis"] = xAxis;
-    obj["callbackPreTag"] = callbackPreTag;
-    obj["callbackAfterTag"] = callbackAfterTag;
-    return (chartCodeCounter++).toString();
-}
+
 
 
 function drawTitleCharts(title){
-    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartValues`, addChartDataTable([title], "prices"));
-    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDelta`, addChartDataTable([title], "percentage trend", [TAG_SUM_PREC], "percentage"));
-    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", `market${title}ChartAverageLine`, addChartDataTable([title], "average line", [TAG_AVERAGE_LINE], "value"));
-    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", `market${title}ChartDeltaValues`, addChartDataTable([title], "delta values", [], "percentage"));
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", addChartDataTable(`market${title}ChartValues`, "line",  [title], "prices", [TAG_AVERAGE_LINE]));
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", addChartDataTable(`market${title}ChartDelta`, "line", [title], "percentage trend", [TAG_SUM_PREC], "percentage"));
+    eel.formatData([title], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", addChartDataTable(`market${title}ChartDeltaValues`, "line", [title], "delta values", [], "percentage"));
 }
 
 function ereaseTitleCharts(title){
@@ -291,15 +297,15 @@ function drawCharts(){
         drawingCharts = true;
         
 
-        eel.formatData(selected, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "marketChart", addChartDataTable(selected,""));
+        eel.formatData(selected, marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", addChartDataTable("marketChart", "line", selected,""));
         
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDelta", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "percentage trend", [TAG_SUM_PREC], "percentage"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "log", "comparisonChartLog", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "log trend", [TAG_SUM_PREC], "log"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartScaled", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "same start", [TAG_SAME_START]));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaValues", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta values", [], "percentage"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartAverageLine", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "average line", [TAG_AVERAGE_LINE], "value"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", "comparisonChartRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "ratio", [TAG_RATIO], "value"));
-        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", "comparisonChartDeltaRatio", addChartDataTable([comparisonTitle1.value, comparisonTitle2.value], "delta ratio", [TAG_RATIO], "value"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", addChartDataTable("comparisonChartDelta", "line", [comparisonTitle1.value, comparisonTitle2.value], "percentage trend", [TAG_SUM_PREC], "percentage"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "log", addChartDataTable("comparisonChartLog", "line", [comparisonTitle1.value, comparisonTitle2.value], "log trend", [TAG_SUM_PREC], "log"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", addChartDataTable("comparisonChartScaled", "line", [comparisonTitle1.value, comparisonTitle2.value], "same start", [TAG_SAME_START]));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", addChartDataTable("comparisonChartDeltaValues", "line", [comparisonTitle1.value, comparisonTitle2.value], "delta values", [], "percentage"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", addChartDataTable("comparisonChartAverageLine", "line", [comparisonTitle1.value, comparisonTitle2.value], "average line", [TAG_AVERAGE_LINE], "value"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "value", addChartDataTable("comparisonChartRatio", "line", [comparisonTitle1.value, comparisonTitle2.value], "ratio", [TAG_RATIO], "value"));
+        eel.formatData([comparisonTitle1.value, comparisonTitle2.value], marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), "deltaPerc", addChartDataTable("comparisonChartDeltaRatio", "line", [comparisonTitle1.value, comparisonTitle2.value], "delta ratio", [TAG_RATIO], "value"));
 
 
         eel.sendStopDrawing()
@@ -311,108 +317,11 @@ function stopDrawing(){
     drawingCharts = false;
 }
 
-
-eel.expose(applyChart);
-function applyChart(formattedData, elemId, dataChartCode){
-    setTimeout(()=>{
-        try{
-            if(chartDataTables[dataChartCode]==null)
-                return;
-            let dataTable = chartDataTables[dataChartCode]["table"];
-            let chartTitle = chartDataTables[dataChartCode]["title"];
-            let tags = chartDataTables[dataChartCode]["tags"];
-            let yAxis = chartDataTables[dataChartCode]["yAxis"];
-            let xAxis = chartDataTables[dataChartCode]["xAxis"];
-            let callbackPreTag = chartDataTables[dataChartCode]["callbackPreTag"];
-            let callbackAfterTag = chartDataTables[dataChartCode]["callbackAfterTag"];
-            
-            for(let i=0;i<formattedData.length;i++){
-                formattedData[i][0] = new Date(formattedData[i][0]*1000);
-            }
-
-            if(callbackPreTag){
-                formattedData = callbackPreTag(formattedData, dataChartCode);
-            }
-            tags.forEach((t)=>{
-                if(t == TAG_RATIO){
-                    dataTable.removeColumns(1,2);
-                    dataTable.addColumn('number', "ratio");
-                    for(let i=0;i<formattedData.length;i++){
-                        formattedData[i][1] = (formattedData[i][1]/formattedData[i][2]);
-                        formattedData[i].pop(2);
-            
-                    }
-                }
-                else if( t == TAG_SUM_PREC){
-                    for(let i=1;i<formattedData.length;i++){
-                        for(let j=1;j<formattedData[0].length; j++){
-                            formattedData[i][j] += formattedData[i-1][j];
-                        }
-                    }
-                }
-                else if(t == TAG_SCALED){
-                    for(let j=2;j<formattedData[0].length; j++){
-                        let factorScale = formattedData[0][1]/formattedData[0][j];
-                        for(let i=0;i<formattedData.length;i++){
-                            formattedData[i][j] *= factorScale;
-                        }
-                    }
-                }
-                else if(t == TAG_SAME_START){
-                    for(let j=2;j<formattedData[0].length; j++){
-                        let factorAdditional = formattedData[0][1]-formattedData[0][j];
-                        for(let i=0;i<formattedData.length;i++){
-                            formattedData[i][j] += factorAdditional;
-                        }
-                    }
-                }
-                else if(t == TAG_AVERAGE_LINE){
-                    dataTable.addColumn('number', "average")
-                    let cnt=0;
-                    let sum=0;
-                    for(let j = 1; j < formattedData[0].length;j++){
-                        for(let i=0; i < formattedData.length; i++){
-                            cnt++;
-                            sum+=formattedData[i][j];
-                        }
-                    }
-                    let avg = sum/cnt;
-                    for(let i=0; i < formattedData.length; i++){
-                        formattedData[i].push(avg);
-                    }
-                }
-
-            });
-            if(callbackAfterTag){
-                formattedData = callbackAfterTag(formattedData, dataChartCode);
-            }
-
-        
-            dataTable.addRows(formattedData);
-        
-            let options = {
-                hAxis: {
-                    title: xAxis
-                },
-                vAxis: {
-                    title: yAxis
-                },
-                title: chartTitle
-            };
-        
-            let chart = new google.visualization.LineChart(document.getElementById(elemId));
-            chart.draw(dataTable, options);    
-        }
-        catch(e){
-            console.error(e);
-        }
-    },10);
-}
-
-
 function runCorrelationTable(){
-    eel.calculateCorrelationMatrix(getSelectedMarkets(), marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue());
+    eel.calculateCorrelationMatrix(getSelectedMarkets(), marketListCheck_from.value, marketListCheck_to.value, getIntervalValue(), getTypeValue(), correlationExport.checked);
 }
+
+
 
 
 var corrMatrixCache = null;
@@ -422,7 +331,7 @@ function createCorrelationTable(corrMatrix){
         corrMatrixCache = corrMatrix;
         let markets = getSelectedMarkets();
         let upperThreshold = document.getElementById("correlationUpperThreshold").value;
-        let  lowerThreshold = document.getElementById("correlationLowerThreshold").value;
+        let lowerThreshold = document.getElementById("correlationLowerThreshold").value;
         tableHtml = `<thead><tr style="position:sticky; top:0; background-color:white"><th scope="col"></th>`;
         markets.forEach((m)=>{
             tableHtml+=`<th scope="col">${m}</th>`
@@ -461,19 +370,6 @@ function createCorrelationTable(corrMatrix){
 }
 
 
-function openSimulationPanel(){
-    window.scrollTo(0, 0);
-    simulationPanel.style.display="block";
-    document.getElementById("html").style.overflowY="hidden";
-    removeCharts();
-}
-
-function closeSimulationPanel(){
-    simulationPanel.style.display="none";
-    document.getElementById("html").style.overflowY="scroll";
-    updateStatistics();
-}
-
 
 function dateToString(date){
     return date.getDate()+"/"+(date.getMonth()+1)+"/"+(date.getYear()+1900);
@@ -508,6 +404,10 @@ function setMarketStatus(ms){
     }
     else
         marketStatus = ms;
+}
+
+function openMenu(){
+    location.pathname = '/menu.html';
 }
 
 

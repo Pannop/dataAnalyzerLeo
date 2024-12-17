@@ -1,3 +1,5 @@
-cache
-src/__pycache__
+./resources/cache.json
+/resources/cache.json
+resources/cache.json
+*/__pycache__
 

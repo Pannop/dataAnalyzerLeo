@@ -1,0 +1,341 @@
+{
+  "dashboards": {
+    "Personal": {
+      "alertListeners": [],
+      "type": "portfolio",
+      "titles": {
+        "A2A.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0.3,
+          "index": "FTSEMIB.MI"
+        },
+        "AMP.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0.3,
+          "index": "FTSEMIB.MI"
+        },
+        "AGEN.VI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0.3,
+          "index": "FTSEMIB.MI"
+        }
+      }
+    },
+    "FTSEMIB": {
+      "alertListeners": [],
+      "type": "watchlist",
+      "titles": {
+        "A2A.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "AMP.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "AGEN.VI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "AZM.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BMED.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BPSO.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BAMI.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BMPS.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BPE.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BC.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "CPR.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "DIA.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "ENEL.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "ENI.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "ERG.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "RACE.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "FBK.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "HER.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "IP.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "ISP.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "INW.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "IG.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "IVG.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "LDO.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "MB.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "MONC.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "NEXI.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "PIRC.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "PST.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "PRY.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "REC.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "SPM.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "SRG.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "STLAM.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "STMMI.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "TIT.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "TEN.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "TRN.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "UCG.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "UNI.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        }
+      }
+    },
+    "Others": {
+      "alertListeners": [],
+      "type": "watchlist",
+      "titles": {
+        "5SIT.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "GC=F": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "SI=F": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "EURUSD=X": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "BTC-EUR": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "AAPL": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "AMZN": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        },
+        "TXT.MI": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        }
+      }
+    },
+    "GSPC": {
+      "alertListeners": [],
+      "type": "watchlist",
+      "titles": {
+        "^GSPC": {
+          "initialPrice": 1,
+          "lever": 1,
+          "capital": 0,
+          "index": "FTSEMIB.MI"
+        }
+      }
+    }
+  },
+  "alertListeners": []
+}

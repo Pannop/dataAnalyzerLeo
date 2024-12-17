@@ -1,34 +1,40 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import eel
 import json
 import pandas
 import os
+from copy import deepcopy 
 import numpy as np
 from marketAnalyzer import MarketMatrix
-from utils.alert import AlertChecker
 from utils.marketStatusChecker import MarketStatusChecker
-from utils.prevision import calculateHeston, calculateMontecarlo, calculateMontecarloGeometricBrownianMotion, calculateMontecarloV2, calculateEma, calculateMACD
+from utils.indicators import *
 from utils.backTest import runBackTesting
+from utils.dataBase import DataBase
 from secondaries.threadStopper import threadStop
 import matplotlib.pyplot as plt
+import frontEndIndicatorsAlerts 
+from frontEndIndicatorsAlerts import loadDashboardData, formatGoogleChart
 
 eel.init("./src/web/")
 
 winSize = None
+dataBase = None
 marketMatrix = None
-alertChecker = None
 marketStatusChecker = None 
 
 
-def __init__(dimX, dimY, marketMatrixRef: MarketMatrix, alertCheckerRef: AlertChecker, marketStatusCheckerRef: MarketStatusChecker):
+def __init__(dimX, dimY, dataBaseRef: DataBase, marketStatusCheckerRef: MarketStatusChecker):
     global winSize
     winSize = [dimX, dimY]
-    global marketMatrix
-    marketMatrix = marketMatrixRef
-    global alertChecker
-    alertChecker = alertCheckerRef
+    global dataBase
+    dataBase = dataBaseRef
     global marketStatusChecker
     marketStatusChecker = marketStatusCheckerRef
+    frontEndIndicatorsAlerts.__init__(dataBase)
+
+def setMarketMatrix(marketMatrixRef: MarketMatrix):
+    global marketMatrix
+    marketMatrix = marketMatrixRef
 
 def stopThreads(route, websockets):
     if not websockets:
@@ -36,11 +42,8 @@ def stopThreads(route, websockets):
         exit()
 
 def start():
-    marketMatrix.loadCache()
-    marketMatrix.loadData()
-    marketMatrix.saveCache()
     #eel.start("start.html", size=winSize, close_callback=stopThreads, shutdown_delay=10)
-    eel.start("start.html", size=winSize, close_callback=None, shutdown_delay=10)
+    eel.start("menu.html", size=winSize, close_callback=None, shutdown_delay=10)
 
 DATA_DIR = "./data/"
 def jsonToXlsx(data, excelFile="excelFile.xlsx"):
@@ -57,39 +60,35 @@ def setDefaultSize():
 
 @eel.expose
 def loadTitles():
-    eel.setTitles({"indexName":marketMatrix.cache["indexName"], "marketList":marketMatrix.cache["marketList"]})
+    eel.setTitles({"marketList":marketMatrix.marketList})
 
-def format(data, markets, valueType):
-    formattedData = []
-    for t in range(len(data[markets[0]])):
-        formattedData.append([data[markets[0]][t]["timestamp"]])
-        for m in markets:
-            formattedData[t].append(data[m][t][valueType])
-    return formattedData
+
+
+
 
 @eel.expose
-def formatData(markets, fromDate, toDate, interval, type, valueType, elemId, dataChartCode):
+def formatData(markets, fromDate, toDate, interval, type, valueType, dataChartCode):
     if(len(markets)==0):
         return []
     data = marketMatrix.getMarketsData(markets, fromDate, toDate, interval, type)
-    formattedData = format(data, markets, valueType)
+    formattedData = formatGoogleChart(data, markets, valueType)
 
     
-    eel.applyChart(formattedData, elemId, dataChartCode) 
+    eel.applyChart(formattedData, dataChartCode) 
 
 
 @eel.expose
 def calculateStats(markets, fromDate, toDate, interval, type, weightedCorrelationSections, elemsId):
-    markets.append(marketMatrix.indexName)
+    if(len(markets)==1):
+        markets.append(marketMatrix.getIndexOfTitle(markets[0]))
     dataDaily = marketMatrix.getMarketsData(markets, fromDate, toDate, "d", type)
     dataWeekly = marketMatrix.getMarketsData(markets, fromDate, toDate, "wk", type)
     dataMonthly = marketMatrix.getMarketsData(markets, fromDate, toDate, "mo", type)
-    
     correlation = marketMatrix.calculateCorrelation([d["value"] for d in dataDaily[markets[0]]], [d["value"] for d in dataDaily[markets[1]]])
     weightedCorrelation = marketMatrix.calculateWeightedCorrelation([d["value"] for d in dataDaily[markets[0]]], [d["value"] for d in dataDaily[markets[1]]], weightedCorrelationSections)
     def getBeta(data):
         try:
-            return round(marketMatrix.calculateBeta([d["deltaPerc"] for d in data[markets[0]]], [d["deltaPerc"] for d in data[marketMatrix.indexName]]) / marketMatrix.calculateBeta([d["deltaPerc"] for d in data[markets[1]]], [d["deltaPerc"] for d in data[marketMatrix.indexName]]), 3)
+            return round(marketMatrix.calculateBeta([d["deltaPerc"] for d in data[markets[0]]], [d["deltaPerc"] for d in data[marketMatrix.getIndexOfTitle(markets[0])]]) / marketMatrix.calculateBeta([d["deltaPerc"] for d in data[markets[1]]], [d["deltaPerc"] for d in data[marketMatrix.getIndexOfTitle(markets[1])]]), 3)
         except:
             return "N/D"
         
@@ -126,9 +125,20 @@ def calculateStats(markets, fromDate, toDate, interval, type, weightedCorrelatio
     eel.applyStats(correlation, weightedCorrelation, betaDaily, betaWeekly, betaMonthly, elemsId)
 
 
+
 @eel.expose
-def calculateCorrelationMatrix(markets, fromDate, toDate, interval, type):
+def calculateCorrelationMatrix(markets, fromDate, toDate, interval, type, exportExcel):
     corrMatrix = marketMatrix.createCorrelationMatrix(markets, fromDate, toDate, interval, type)
+    if(exportExcel):
+        exportMatrix = [[0]*(len(markets)+1) for x in range(len(markets)+1)]
+        for i in range(len(markets)):
+            exportMatrix[i+1][0] = markets[i]
+            exportMatrix[0][i+1] = markets[i]
+        for i in range(len(markets)):
+            for j in range(len(markets)):
+                exportMatrix[i+1][j+1] = corrMatrix[i][j]
+        
+        jsonToXlsx(exportMatrix, "correlationalMatrix.xlsx")
     eel.createCorrelationTable(corrMatrix)
     
 
@@ -148,62 +158,6 @@ def sendStopDrawing():
     eel.stopDrawing()
 
 
-@eel.expose
-def calculatePrevision(market, fromDate, toDate, interval, type, simulations, dataNum):
-    data = marketMatrix.getMarketsData([market], fromDate, toDate, interval, type)
-    formattedData = format(data, [market], "value")
-    formattedPrevision = []
-    montecarloData = calculateMontecarloV2(data[market], simulations, dataNum)
-    montecarloGBMData = calculateMontecarloGeometricBrownianMotion(data[market], simulations, dataNum)
-    hestonData = calculateHeston(data[market], simulations, dataNum)
-    date = datetime.fromtimestamp(formattedData[-1][0])
-    for i in range(dataNum):
-        day = [date.timestamp()]
-        if(interval=="d"):
-            date += timedelta(days=1)
-            if(date.weekday() == 5 ):
-                date += timedelta(days=2)
-        elif(interval=="wk"):
-            date += timedelta(weeks=1)
-        elif(interval=="mo"):
-            date += timedelta(days=(31 if date.month in (1,3,5,7,8,10,12) else 30))
-       
-        day.append(montecarloData[i])
-        day.append(montecarloGBMData[i])
-        day.append(hestonData[i])
-        formattedPrevision.append(day)
-    
-    dfMacd = calculateMACD(data[market], 12, 26, 9)
-    plt.plot(pandas.DataFrame(dfMacd))
-    plt.show()
-
-    df = calculateEma([d["value"] for d in data[market]], 12)
-    df2 = calculateEma([d["value"] for d in data[market]], 26)
-    dfs = calculateEma([d[0] for d in (pandas.DataFrame(df) - pandas.DataFrame(df2)).values], 9)
-    plt.plot(pandas.DataFrame(df) - pandas.DataFrame(df2))
-    plt.plot(dfs)
-    plt.show()
-
-    
-
-        	
-
-    eel.applyChartPrevision(formattedData, formattedPrevision)
-
-
-@eel.expose
-def checkAlert(volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, progressBarId):
-    alertChecker.check(volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, progressBarId)
-    eel.applyAlertTable(alertChecker.alerts)
-
-@eel.expose
-def addAlertListener(num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate):
-    alertChecker.addListener(num, volumePerc, valuePerc, minVolume, minVolumePrice, regions, caps, refreshRate)
-
-@eel.expose
-def removeAlertListener(num):
-    alertChecker.removeListener(num)
-
 @eel.expose()
 def getRealtimeSuffixes():
     eel.setRealtimeSuffixes(marketStatusChecker.getRealtimeSuffixes())
@@ -222,3 +176,61 @@ def calculateBackTesting(title):
         sum.write(json.dumps(testsResultsSummary))
         res.write(json.dumps(testsResults))
     print(testsResults)
+
+
+
+@eel.expose
+def loadMenuData():
+    #non ho potuto usare la deepcopy perchè aveva problemi col lock degli oggetti aggancati da thread
+    dataTest = dataBase.config["dashboards"].copy()
+    dateCur = date.today().strftime("%Y-%m-%d")
+    datePast=""    
+    interval=""
+
+    for dashboard in dataTest:
+        dataTest[dashboard] = dataTest[dashboard].copy()
+        del dataTest[dashboard]["alertListeners"]
+        isWatchlist = dataTest[dashboard]["type"]=="watchlist"
+        isPortfolio = dataTest[dashboard]["type"]=="portfolio"
+        if(isWatchlist):
+            interval="wk"
+            yearPast = 1
+            datePast = (date.today() + timedelta(weeks=-52*yearPast)).strftime("%Y-%m-%d")
+        elif(isPortfolio):
+            interval="d"
+            datePast = (date.today() + timedelta(days=-5)).strftime("%Y-%m-%d")
+        markets = list(dataTest[dashboard]["titles"].keys())
+        marketsData = dataBase.getMarketMatrix(dashboard).getMarketsData(markets, datePast, dateCur, interval, "close")
+        latestValues = []
+        emptyData=False
+        for m in markets:
+            if(len(marketsData[m])==0):
+                    emptyData=True
+                    break
+            latestValues.append(marketsData[m][-1]["value"])
+        if(emptyData):
+            dataTest[dashboard]["chart"] = []
+            continue
+        latestValues.sort(reverse=True)
+        
+        minValueFilter=0
+        if(isWatchlist):
+            minValueFilter = latestValues[min(len(latestValues), 7) - 1]
+        filteredMarketsData = {key:val for (key,val) in marketsData.items() if val[-1]["value"] >=  minValueFilter}
+        
+        if(isPortfolio):
+            for title in marketsData:
+                dataTest[dashboard]["titles"] =  dataTest[dashboard]["titles"].copy()
+                dataTest[dashboard]["titles"][title] = dataTest[dashboard]["titles"][title].copy()
+                dataTest[dashboard]["titles"][title]["latestPrice"] = marketsData[title][-1]["value"]
+
+        dataTest[dashboard]["chart"] = formatGoogleChart(filteredMarketsData, list(filteredMarketsData.keys()), "value")
+    eel.applyMenuData(dataTest)
+
+
+@eel.expose
+def loadDashboard(dashboard):
+    mm = dataBase.getMarketMatrix(dashboard)
+    setMarketMatrix(mm)
+    loadDashboardData(mm)
+    eel.openDashboard()

@@ -36,3 +36,7 @@ hr{
 .clickable{
     cursor: pointer;
 }
+
+input[type=date]{
+    max-width: 150px;
+}

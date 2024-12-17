@@ -43,7 +43,11 @@ class MarketStatusChecker(Thread):
                 if(retries==10):
                     print("error retrieving status data")
                 data = req.json()
-                self.marketStatus[r]["open"] = (data["finance"]["result"][0]["count"]>0 and data["finance"]["result"][0]["quotes"][0]["marketState"] == "REGULAR")
+                try:
+                    self.marketStatus[r]["open"] = (data["finance"]["result"][0]["count"]>0 and data["finance"]["result"][0]["quotes"][0]["marketState"] == "REGULAR")
+                except:
+                    print("error in market status checker, prob list index out of range")
+                    print(data)
             self.ready = True
             for t in range(self.updateTime):
                 time.sleep(1)

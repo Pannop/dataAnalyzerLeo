@@ -5,6 +5,34 @@ from scipy.fft import fft, rfft
 from scipy.fft import fftfreq, rfftfreq
 from pandas_datareader import data as pdr
 import matplotlib.pyplot as plt
+import math 
+
+
+class Indicator:
+    def __init__(self):
+        pass
+
+    def gatherData(self):
+        pass
+
+    def updateProgress(self):
+        pass
+
+
+class IndicatorPrevision(Indicator):
+    def __init__(self, market, fromDate, toDate, interval, type, simulations, futureData):
+
+        pass
+
+
+def orderObjectListBy(list, column):
+    for i in range(len(list)):
+        for j in range(i+1, len(list)):
+            if(list[i][column] < list[j][column]):
+                tmp = list[i]
+                list[i] = list[j]
+                list[j] = tmp
+
 
 
 def calculateMontecarlo(data, simulations, futureDataNum):
@@ -180,14 +208,68 @@ def calculateEma(data, periods):
     return result
      
 
-def calculateMACD(data, period1, period2, periodSignal):
+def calculateMACD(data, periodFast, periodSlow, periodSignal):
     data = [d["value"] for d in data]
-    df1 = pd.DataFrame(calculateEma(data, period1))
-    df2 = pd.DataFrame(calculateEma(data, period2))
+    df1 = pd.DataFrame(calculateEma(data, periodFast))
+    df2 = pd.DataFrame(calculateEma(data, periodSlow))
     dfDiff = df1 - df2
     dfSignal = pd.DataFrame(calculateEma([d[0] for d in dfDiff.values], periodSignal))
     dfMACD = dfDiff - dfSignal
-    return [d[0] for d in dfMACD.values]
+    return [d[0] for d in dfMACD.values], [d[0] for d in dfDiff.values], [d[0] for d in dfSignal.values]
+
+def calculateOBV(dataOpen, dataClose, dataVolume):
+    actualOBV = 0
+    obv = []
+    for i in range(len(dataClose)):
+        if(dataClose[i]["value"] > dataOpen[i]["value"]):
+            actualOBV+=dataVolume[i]["value"]
+        elif(dataClose[i]["value"] < dataOpen[i]["value"]):
+            actualOBV-=dataVolume[i]["value"]
+        obv.append(actualOBV)
+    return obv
+
+
+def calculateRollingRSI(data, pastUnits, adjust=False):
+    data = [d["delta"] for d in data]
+    result = []
+    prevGaneAvg=0
+    prevLossAvg=0
+    for i in range(pastUnits-1, len(data)):
+        dataSlice = data[i-pastUnits+1 : i+1]
+        ganeAvg = sum([d for d in dataSlice if d > 0])/pastUnits + prevGaneAvg*13*adjust
+        lossAvg = abs(sum([d for d in dataSlice if d < 0]))/pastUnits + prevLossAvg*13*adjust
+        rs = 0
+        if(lossAvg==0):
+            rs = math.inf
+        else:
+            rs = ganeAvg / lossAvg
+        rsi = 100-(100/(1+rs))
+        result.append(rsi)
+    return result
+
+
+def calculateExpRSI(data, pastUnits):
+    data = [d["delta"] for d in data]
+    dfGane = pd.DataFrame([d if d>0 else 0 for d in data])
+    dfLoss = pd.DataFrame([d if d<0 else 0 for d in data]).abs()
+    ewmGane = dfGane.ewm(com=pastUnits, adjust=True).mean()
+    ewmLoss = dfLoss.ewm(com=pastUnits, adjust=True).mean()
+
+    rsi = 100 - (100/(1+ewmGane/ewmLoss))
+    return [d[0] for d in rsi.values]
+
+
+def calculateVolumePriceFilter(data, minVolumePerc, minPricePerc, minVolume, minVolumePrice, sort):
+    
+    filtered = [d for d in data if d["volumeAvg"]>minVolume and 
+                                            d["volumeDeltaPerc"]>=minVolumePerc and 
+                                            d["valueDeltaPerc"]>=minPricePerc and
+                                            d["volumePrice"]>=minVolumePrice]
+    if(sort!=None):
+        orderObjectListBy(filtered, sort)
+    return filtered
+
+    
 
 """
 class Signal:
